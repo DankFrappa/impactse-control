@@ -14,7 +14,7 @@ Nothing is sent to the mouse until you click **Save to mouse**.
 
 ## Running it
 
-Download the latest `ImpactSE-win-x64` build from the Actions tab, unzip it, and run `ImpactSE.exe`.
+Download the latest `ImpactSE-win-x64` build from the Actions tab, unzip it, and run `ImpactSE.exe` (the only file inside). The first start takes a few seconds longer while it unpacks.
 Close Redragon's app first so the two don't talk to the mouse at the same time.
 
 ## Building
