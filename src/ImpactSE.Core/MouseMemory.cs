@@ -1,0 +1,181 @@
+namespace ImpactSE.Core;
+
+/// <summary>
+/// A copy of the mouse's settings memory, plus typed accessors for the parts that are confirmed.
+/// Edits change only this copy; <see cref="MouseMemory.Changes"/> lists what differs from the original.
+/// </summary>
+public sealed class MouseMemory
+{
+    public const int Size = 0x500;
+    public const int ProfileCount = 5;
+    public const int DpiStageCount = 5;
+    public const int ButtonCount = 18;
+    public const int FirstSideButton = 6;
+    public const int SideButtonCount = 12;
+
+    // Memory map (see docs/protocol.md).
+    public const int ActiveProfileAddress = 0x2C;
+    public const int PollRateAddress = 0x32;      // 2 bytes per profile
+    public const int LightingAddress = 0x448;     // 8 bytes per profile: ?? R G B mode ...
+    static readonly int[] ProfileBase = { 0x40, 0x100, 0x1B0, 0x260, 0x310 };
+    const int DpiStagesOffset = 4;               // then 6 bytes per stage: en xLo xHi yLo yHi 00
+    const int DpiStageLength = 6;
+    const int ButtonsOffset = 0x42;              // 4 bytes per button: type mod key 00
+
+    readonly byte[] _original;
+    readonly byte[] _data;
+
+    public MouseMemory(byte[] image)
+    {
+        if (image.Length != Size) throw new ArgumentException($"Expected {Size} bytes.", nameof(image));
+        _original = (byte[])image.Clone();
+        _data = (byte[])image.Clone();
+    }
+
+    public ReadOnlySpan<byte> Bytes => _data;
+
+    public byte[] ToArray() => (byte[])_data.Clone();
+
+    public static int ProfileAddress(int profile) => ProfileBase[CheckProfile(profile)];
+
+    public int ActiveProfile
+    {
+        get => _data[ActiveProfileAddress];
+        set => _data[ActiveProfileAddress] = (byte)CheckProfile(value);
+    }
+
+    public PollRate GetPollRate(int profile) => (PollRate)_data[PollRateAddress + 2 * CheckProfile(profile)];
+
+    public void SetPollRate(int profile, PollRate rate)
+    {
+        if (!Enum.IsDefined(rate)) throw new ArgumentOutOfRangeException(nameof(rate));
+        _data[PollRateAddress + 2 * CheckProfile(profile)] = (byte)rate;
+    }
+
+    public DpiStage GetDpiStage(int profile, int stage)
+    {
+        int a = DpiStageAddress(profile, stage);
+        return new DpiStage(
+            _data[a] != 0,
+            DpiStage.FromRaw(_data[a + 1] | _data[a + 2] << 8),
+            DpiStage.FromRaw(_data[a + 3] | _data[a + 4] << 8));
+    }
+
+    public void SetDpiStage(int profile, int stage, DpiStage value)
+    {
+        int a = DpiStageAddress(profile, stage);
+        int x = DpiStage.ToRaw(value.X), y = DpiStage.ToRaw(value.Y);
+        _data[a] = value.Enabled ? (byte)1 : (byte)0;
+        _data[a + 1] = (byte)x;
+        _data[a + 2] = (byte)(x >> 8);
+        _data[a + 3] = (byte)y;
+        _data[a + 4] = (byte)(y >> 8);
+    }
+
+    public ButtonAction GetButton(int profile, int button)
+    {
+        int a = ButtonAddress(profile, button);
+        return new ButtonAction(_data[a], _data[a + 1], _data[a + 2], _data[a + 3]);
+    }
+
+    public void SetButton(int profile, int button, ButtonAction action)
+    {
+        int a = ButtonAddress(profile, button);
+        _data[a] = action.Type;
+        _data[a + 1] = action.Modifier;
+        _data[a + 2] = action.Code;
+        _data[a + 3] = action.Extra;
+    }
+
+    public (byte R, byte G, byte B) GetColor(int profile)
+    {
+        int a = LightingAddress + 8 * CheckProfile(profile) + 1;
+        return (_data[a], _data[a + 1], _data[a + 2]);
+    }
+
+    public void SetColor(int profile, byte r, byte g, byte b)
+    {
+        int a = LightingAddress + 8 * CheckProfile(profile) + 1;
+        _data[a] = r;
+        _data[a + 1] = g;
+        _data[a + 2] = b;
+    }
+
+    /// <summary>Copies every byte of <paramref name="other"/> into this copy (used to restore a backup).</summary>
+    public void LoadFrom(ReadOnlySpan<byte> other)
+    {
+        if (other.Length != Size) throw new ArgumentException($"Expected {Size} bytes.", nameof(other));
+        other.CopyTo(_data);
+    }
+
+    public bool HasChanges => Changes().Count > 0;
+
+    /// <summary>Contiguous runs of changed bytes, as (address, new bytes).</summary>
+    public IReadOnlyList<(int Address, byte[] Data)> Changes()
+    {
+        var runs = new List<(int, byte[])>();
+        int i = 0;
+        while (i < Size)
+        {
+            if (_data[i] == _original[i]) { i++; continue; }
+            int start = i;
+            while (i < Size && _data[i] != _original[i]) i++;
+            runs.Add((start, _data.AsSpan(start, i - start).ToArray()));
+        }
+        return runs;
+    }
+
+    static int DpiStageAddress(int profile, int stage)
+    {
+        if (stage < 0 || stage >= DpiStageCount) throw new ArgumentOutOfRangeException(nameof(stage));
+        return ProfileAddress(profile) + DpiStagesOffset + DpiStageLength * stage;
+    }
+
+    static int ButtonAddress(int profile, int button)
+    {
+        if (button < 0 || button >= ButtonCount) throw new ArgumentOutOfRangeException(nameof(button));
+        return ProfileAddress(profile) + ButtonsOffset + 4 * button;
+    }
+
+    static int CheckProfile(int profile)
+    {
+        if (profile < 0 || profile >= ProfileCount) throw new ArgumentOutOfRangeException(nameof(profile));
+        return profile;
+    }
+}
+
+/// <summary>Polling-rate codes. 1000 Hz and 500 Hz are confirmed on the mouse; 250 and 125 follow the same pattern.</summary>
+public enum PollRate : byte
+{
+    Hz1000 = 1,
+    Hz500 = 2,
+    Hz250 = 4,
+    Hz125 = 8,
+}
+
+public readonly record struct DpiStage(bool Enabled, int X, int Y)
+{
+    public const int Min = 100;
+    public const int Max = 10000;
+    public const int Step = 100;
+
+    // Stored value = DPI / 100 + 2 (confirmed: 0x0A = 800, 0x0B = 900).
+    public static int FromRaw(int raw) => (raw - 2) * Step;
+
+    public static int ToRaw(int dpi)
+    {
+        if (dpi < Min || dpi > Max || dpi % Step != 0)
+            throw new ArgumentOutOfRangeException(nameof(dpi), $"DPI must be {Min}–{Max} in steps of {Step}.");
+        return dpi / Step + 2;
+    }
+}
+
+/// <summary>One button's 4-byte mapping: [type][modifier][code][extra].</summary>
+public readonly record struct ButtonAction(byte Type, byte Modifier, byte Code, byte Extra)
+{
+    public const byte KeyType = 0x90;
+
+    public bool IsKey => Type == KeyType;
+
+    public static ButtonAction Key(byte hidUsage) => new(KeyType, 0, hidUsage, 0);
+}

@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Test core library
+        run: dotnet test tests/ImpactSE.Core.Tests -c Release
+
+      - name: Publish app
+        run: dotnet publish src/ImpactSE.App -c Release -r win-x64 --self-contained -p:Platform=x64 -o publish/ImpactSE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ImpactSE-win-x64
+          path: publish/ImpactSE
+          if-no-files-found: error
