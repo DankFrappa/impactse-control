@@ -1,25 +1,53 @@
-# impactse-control
+# Impact SE Control
 
-A modern Windows app for configuring the Redragon Impact SE (wired) MMO mouse, replacing Redragon's settings tool.
+A clean, modern Windows 11 app for setting up the **Redragon M908 Impact SE** (wired) MMO mouse. It replaces Redragon's own settings software.
 
-## What it does
+It works with the mouse's built-in memory, so your settings stay on the mouse. You don't need to keep this app running, and it installs no drivers.
 
-- **Side buttons:** set each of the 12 side buttons to any key, with one-click presets (number row, numpad, or F13–F24 so they never clash with your keyboard)
-- **DPI:** turn the 5 stages on or off and set each one from 100 to 10,000
-- **Lighting:** pick each profile's color
-- **Polling rate** and **active profile**
-- **Backups:** a full copy of the mouse's settings is saved every time the app connects, and the original can be restored in one click
+## Features
 
-Nothing is sent to the mouse until you click **Save to mouse**.
+- **Every button, your choice.** You can set the 12 side buttons, the 6 top buttons and the scroll wheel to:
+  - any keyboard key
+  - a mouse action: left, right or middle click, back, forward, scroll, DPI up or down, profile switch
+  - a media key: play/pause, volume, mute
+  - a shortcut like Copy, Paste or Alt+Tab
+- **One-click side-button presets.** Choose number row 1–0, numpad, or **F13–F24**. F13–F24 are real keys that no keyboard has, so games can bind them without clashing with your keyboard.
+- **DPI:** switch each of the 5 stages on or off and set it anywhere from 100 to 10,000.
+- **Lighting:** a color picker for each profile.
+- **Polling rate**, and which of the 5 profiles the mouse uses.
+- **Safe by design:**
+  - Nothing reaches the mouse until you click **Save to mouse**.
+  - Every time the app connects, it saves a backup of the mouse's settings. You can restore the original settings in one click.
+  - The app won't let you save a profile that has no left-click button.
 
-## Running it
+## Getting it
 
-Download the latest `ImpactSE-win-x64` build from the Actions tab, unzip it, and run `ImpactSE.exe` (the only file inside). The first start takes a few seconds longer while it unpacks.
-Close Redragon's app first so the two don't talk to the mouse at the same time.
+1. Open the [Actions](../../actions) tab and click the newest green **Build** run.
+2. Scroll to the bottom. Under **Artifacts**, download **ImpactSE-win-x64**.
+3. Extract the zip. Inside is a single file, **ImpactSE.exe**. Put it anywhere you like.
+4. Close Redragon's software if it's running, then double-click **ImpactSE.exe**.
 
-## Building
+The first start takes a few seconds while the app unpacks itself. Windows may show a SmartScreen warning because the app isn't signed. If it does, click **More info**, then **Run anyway**.
 
-- Core library and tests (any OS): `dotnet test`
-- Windows app (Visual Studio MSBuild): `msbuild src/ImpactSE.App/ImpactSE.App.csproj /restore /t:Publish /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=win-x64 /p:SelfContained=true`
+## Not done yet
 
-How the mouse is talked to is documented in [docs/protocol.md](docs/protocol.md).
+- Lighting effects (breathing, rainbow, and others) and brightness
+- Macros
+- Custom key combos beyond the built-in shortcuts
+
+## For developers
+
+The project has three parts:
+
+- **`src/ImpactSE.Core`** is the mouse protocol (HID feature reports) and a typed view of the mouse's settings memory. It targets net8.0.
+- **`src/ImpactSE.App`** is the WinUI 3 app. It's unpackaged and self-contained, and publishes as a single exe.
+- **`tests/ImpactSE.Core.Tests`** contains xunit tests that run against real memory dumps from the mouse.
+
+Build commands:
+
+- Tests (any OS): `dotnet test`
+- App (Windows, Visual Studio MSBuild): `msbuild src/ImpactSE.App/ImpactSE.App.csproj /restore /t:Publish /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=win-x64`
+
+On every push, CI builds the app and starts it once to check it opens. The protocol and memory map are documented in [docs/protocol.md](docs/protocol.md).
+
+Redragon is a trademark of its owner. This is an independent project and isn't affiliated with Redragon.
