@@ -4,6 +4,8 @@ A clean, modern Windows 11 app for setting up the **Redragon M908 Impact SE** (w
 
 It works with the mouse's built-in memory, so your settings stay on the mouse. You don't need to keep this app running, and it installs no drivers.
 
+> **Coming soon: a web version.** We're building a version that runs right in your browser (Chrome or Edge on a computer), so you can change your mouse's settings without downloading anything. The Windows app below keeps working as it does today.
+
 ## Features
 
 - **Every button, your choice.** You can set the 12 side buttons, the 6 top buttons and the scroll wheel to:
@@ -31,6 +33,7 @@ The first start takes a few seconds while the app unpacks itself. Windows may sh
 
 ## Not done yet
 
+- A web version that runs in Chrome or Edge, with nothing to download (in progress)
 - Lighting effects (breathing, rainbow, and others) and brightness
 - Macros
 - Custom key combos beyond the built-in shortcuts
