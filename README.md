@@ -45,12 +45,15 @@ The project has three parts:
 - **`src/ImpactSE.Core`** is the mouse protocol (HID feature reports) and a typed view of the mouse's settings memory. It targets net8.0.
 - **`src/ImpactSE.App`** is the WinUI 3 app. It's unpackaged and self-contained, and publishes as a single exe.
 - **`tests/ImpactSE.Core.Tests`** contains xunit tests that run against real memory dumps from the mouse.
+- **`web`** is the browser version: plain HTML and JavaScript with no build step. It talks to the mouse through WebHID (Chrome and Edge on desktop). `web/mouse.js` is a port of ImpactSE.Core.
 
 Build commands:
 
 - Tests (any OS): `dotnet test`
+- Web tests (Node 22): `node --test web/tests/*.test.mjs`
+- Web page locally: serve `web/` (for example `python -m http.server -d web`) and open http://localhost:8000 in Chrome. WebHID needs `localhost` or HTTPS.
 - App (Windows, Visual Studio MSBuild): `msbuild src/ImpactSE.App/ImpactSE.App.csproj /restore /t:Publish /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=win-x64`
 
-On every push, CI builds the app and starts it once to check it opens. The protocol and memory map are documented in [docs/protocol.md](docs/protocol.md).
+On every push, CI builds the app and starts it once to check it opens. A second workflow tests the web page and publishes `web/` to GitHub Pages from main. The protocol and memory map are documented in [docs/protocol.md](docs/protocol.md).
 
 Redragon is a trademark of its owner. This is an independent project and isn't affiliated with Redragon.

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Impact SE Control</title>
+  <meta name="description" content="Set up the Redragon M908 Impact SE mouse from your browser. Nothing to install.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='6' y='2' width='12' height='20' rx='6' fill='%23e5484d'/%3E%3Cpath d='M12 2v7' stroke='white' stroke-width='1.5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>Impact SE Control</h1>
+      <p class="sub">Settings for the Redragon M908 Impact SE, right in your browser.</p>
+    </div>
+    <div class="top-actions">
+      <label class="profile-pick" hidden id="profile-wrap">
+        <span>Editing</span>
+        <select id="profile"></select>
+      </label>
+      <button id="connect" class="primary">Connect mouse</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="welcome" class="card welcome">
+      <h2>Get started</h2>
+      <ol>
+        <li>Plug in your Impact SE and close Redragon's own app if it's open.</li>
+        <li>Click <strong>Connect mouse</strong>, pick <em>Impact SE</em> in the box that pops up, then click <strong>Connect</strong>.</li>
+        <li>Change what you like. Nothing reaches the mouse until you click <strong>Save to mouse</strong>.</li>
+      </ol>
+      <p class="muted">Settings are stored on the mouse itself, so they keep working on any computer.
+        Before your first save, this page keeps a copy of your current settings so you can always go back.</p>
+      <p id="unsupported" class="warn" hidden>This browser can't talk to USB devices. Please open this page in
+        <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> on a computer.</p>
+      <p><button id="preview" class="link">Just looking? Try it without a mouse</button></p>
+    </section>
+
+    <div id="banner" class="banner" hidden role="status"></div>
+
+    <div id="editor" hidden>
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="buttons" aria-selected="true">Buttons</button>
+        <button role="tab" data-tab="dpi">DPI</button>
+        <button role="tab" data-tab="lighting">Lighting</button>
+        <button role="tab" data-tab="performance">Polling &amp; profiles</button>
+        <button role="tab" data-tab="backups">Backups</button>
+      </nav>
+
+      <section class="card" data-panel="buttons">
+        <div class="section-head">
+          <h2>Side buttons</h2>
+          <div class="preset">
+            <select id="preset" aria-label="Side button preset"></select>
+            <button id="apply-preset">Apply to all 12</button>
+          </div>
+        </div>
+        <p class="muted">Laid out like the side of the mouse. Tip: F13–F24 are real keys no keyboard has,
+          so games can bind them without clashing with your keyboard.</p>
+        <div id="side-grid" class="grid side"></div>
+        <h2>Top buttons and wheel</h2>
+        <div id="main-grid" class="grid"></div>
+      </section>
+
+      <section class="card" data-panel="dpi" hidden>
+        <h2>DPI stages</h2>
+        <p class="muted">The DPI buttons step through the stages that are switched on. 100 to 10,000, in steps of 100.</p>
+        <div id="dpi-rows" class="dpi-rows"></div>
+      </section>
+
+      <section class="card" data-panel="lighting" hidden>
+        <h2>Light color</h2>
+        <div class="color-row">
+          <input type="color" id="color" aria-label="Light color">
+          <div class="swatches" id="swatches"></div>
+        </div>
+        <p class="muted">Effects like breathing and rainbow aren't supported yet.</p>
+      </section>
+
+      <section class="card" data-panel="performance" hidden>
+        <h2>Polling rate</h2>
+        <p class="muted">How often the mouse reports to the computer. 1000 Hz is smoothest.</p>
+        <div id="poll" class="segmented" role="radiogroup" aria-label="Polling rate"></div>
+        <h2>Active profile</h2>
+        <p id="active-text"></p>
+        <button id="make-active">Use this profile on the mouse</button>
+      </section>
+
+      <section class="card" data-panel="backups" hidden>
+        <h2>Backups</h2>
+        <p id="backup-text" class="muted"></p>
+        <div class="row">
+          <button id="restore-original">Put back my original settings</button>
+          <button id="download-backup">Download a backup file</button>
+          <label class="button">Restore from a file<input type="file" id="restore-file" accept=".bin" hidden></label>
+        </div>
+        <p class="muted">Backup files also work with the Windows app, and its backups work here.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="savebar" id="savebar" hidden>
+    <span id="status">Connected.</span>
+    <div class="row">
+      <button id="discard" disabled>Discard changes</button>
+      <button id="save" class="primary" disabled>Save to mouse</button>
+    </div>
+  </footer>
+
+  <p class="footnote">Independent project, not affiliated with Redragon.
+    <a href="https://github.com/DankFrappa/impactse-control">Source and Windows app</a></p>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
