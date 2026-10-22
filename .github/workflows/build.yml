@@ -1,0 +1,36 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Test core library
+        run: dotnet test tests/ImpactSE.Core.Tests -c Release
+
+      # The WinUI resource (PRI) tasks ship with Visual Studio's MSBuild, not the .NET SDK.
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Publish app
+        run: msbuild src/ImpactSE.App/ImpactSE.App.csproj /restore /t:Publish /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:PublishDir=${{ github.workspace }}/publish/ImpactSE/
+
+      - name: Check the app's resources were published
+        run: |
+          if (-not (Test-Path publish/ImpactSE/resources.pri)) { throw "resources.pri is missing, so the app would crash on start" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ImpactSE-win-x64
+          path: publish/ImpactSE
+          if-no-files-found: error
