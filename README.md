@@ -20,6 +20,6 @@ Close Redragon's app first so the two don't talk to the mouse at the same time.
 ## Building
 
 - Core library and tests (any OS): `dotnet test`
-- Windows app: `dotnet publish src/ImpactSE.App -c Release -r win-x64 --self-contained -p:Platform=x64`
+- Windows app (Visual Studio MSBuild): `msbuild src/ImpactSE.App/ImpactSE.App.csproj /restore /t:Publish /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=win-x64 /p:SelfContained=true`
 
 How the mouse is talked to is documented in [docs/protocol.md](docs/protocol.md).

@@ -19,8 +19,11 @@ jobs:
       - name: Test core library
         run: dotnet test tests/ImpactSE.Core.Tests -c Release
 
+      # The WinUI resource (PRI) tasks ship with Visual Studio's MSBuild, not the .NET SDK.
+      - uses: microsoft/setup-msbuild@v2
+
       - name: Publish app
-        run: dotnet publish src/ImpactSE.App -c Release -r win-x64 --self-contained -p:Platform=x64 -o publish/ImpactSE
+        run: msbuild src/ImpactSE.App/ImpactSE.App.csproj /restore /t:Publish /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:PublishDir=${{ github.workspace }}/publish/ImpactSE/
 
       - uses: actions/upload-artifact@v4
         with:
