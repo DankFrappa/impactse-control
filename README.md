@@ -55,4 +55,8 @@ Build commands:
 
 On every push, CI builds the app and starts it once to check it opens. A second workflow tests the web page and publishes `web/` to GitHub Pages from main. The protocol and memory map are documented in [docs/protocol.md](docs/protocol.md).
 
-Redragon is a trademark of its owner. This is an independent project and isn't affiliated with Redragon.
+## License and disclaimer
+
+Released under the [MIT License](LICENSE).
+
+This is an independent project. It isn't affiliated with, endorsed by or supported by Redragon. Redragon is a trademark of its owner. It changes settings stored on your mouse, and you use it at your own risk. Both the app and the web page keep a backup of your settings so you can put them back.
