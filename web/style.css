@@ -149,6 +149,13 @@ input[type="color"] { width: 96px; height: 96px; border: 1px solid var(--line); 
   border-top: 1px solid var(--line);
 }
 
+.help { max-width: 1000px; margin: 20px auto; padding: 0 16px; }
+.help details { border-top: 1px solid var(--line); padding: 10px 0; }
+.help details:first-of-type { border-top: none; }
+.help summary { cursor: pointer; font-weight: 600; }
+.help ol, .help p { margin: 8px 0 0; }
+.welcome .banner { margin-bottom: 12px; }
+
 .footnote { text-align: center; color: var(--muted); font-size: 12px; }
 
 @media (max-width: 700px) {

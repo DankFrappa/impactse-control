@@ -46,9 +46,9 @@ function setStatus(text) {
 
 function friendlyError(error) {
   if (error instanceof MouseError) return error.message;
-  if (error?.name === "NotAllowedError") return "The browser blocked access to the mouse. Click Connect mouse and pick it from the list.";
+  if (error?.name === "NotAllowedError") return "The browser blocked access to the mouse. Click Connect mouse, click your mouse in the list, then click Connect.";
   if (error?.name === "InvalidStateError" || error?.name === "NetworkError")
-    return "The mouse is busy. Close Redragon's app (and this page in other tabs), unplug and replug the mouse, then try again.";
+    return "The mouse is busy. Close Redragon's software and the Impact SE Windows app, close other tabs with this page, unplug and replug the mouse, then click Connect mouse again.";
   return error?.message ?? String(error);
 }
 
@@ -220,7 +220,7 @@ function populate() {
 function changed() {
   const dirty = memory?.hasChanges === true;
   $("save").disabled = $("discard").disabled = busy || !dirty;
-  if (!busy) setStatus(dirty ? "You have unsaved changes." : preview ? "Preview mode: no mouse connected." : mouse ? "Connected. Everything is saved." : "Mouse not connected.");
+  if (!busy) setStatus(dirty ? "Unsaved changes. Click Save to mouse to keep them." : preview ? "Preview mode: no mouse connected." : mouse ? "Connected. Make a change, then click Save to mouse." : "Mouse not connected.");
 }
 
 // ---- Connecting ----
@@ -233,7 +233,7 @@ async function connect(silent) {
   try {
     const transport = silent ? await WebHidTransport.remembered() : await WebHidTransport.request();
     if (!transport) {
-      if (!silent) show("warn", "No Impact SE was picked. Plug it in, then click Connect mouse and choose it from the list.");
+      if (!silent) show("warn", "No mouse was picked. Click Connect mouse, click your mouse in the list, then click Connect. If it isn't in the list, see Help at the bottom of the page.");
       return;
     }
     setStatus("Reading the mouse's settings…");
@@ -249,7 +249,7 @@ async function connect(silent) {
     $("connect").textContent = "Reconnect";
     $("banner").hidden = true;
   } catch (error) {
-    show("error", `Couldn't connect. ${friendlyError(error)}`);
+    show("error", `Couldn't connect. ${friendlyError(error)} Still stuck? See Help at the bottom of the page.`);
   }
 }
 

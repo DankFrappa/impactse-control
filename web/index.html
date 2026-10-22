@@ -25,16 +25,21 @@
 
   <main>
     <section id="welcome" class="card welcome">
+      <p id="unsupported" class="banner warn" hidden><strong>This browser can't talk to USB devices.</strong>
+        Please open this page in <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> on a computer.
+        Firefox, Safari and phones won't work.</p>
       <h2>Get started</h2>
       <ol>
-        <li>Plug in your Impact SE and close Redragon's own app if it's open.</li>
-        <li>Click <strong>Connect mouse</strong>, pick <em>Impact SE</em> in the box that pops up, then click <strong>Connect</strong>.</li>
-        <li>Change what you like. Nothing reaches the mouse until you click <strong>Save to mouse</strong>.</li>
+        <li>Plug in your Impact SE.</li>
+        <li>If Redragon's own software is open, close it. Also check the little arrow by the clock in the
+          bottom-right corner of your screen: if Redragon's icon is there, right-click it and choose <strong>Exit</strong>.</li>
+        <li>Click the red <strong>Connect mouse</strong> button at the top right of this page.</li>
+        <li>A small box pops up. Click your mouse in the list (there should be only one), then click <strong>Connect</strong>.</li>
+        <li>Change what you like, then click <strong>Save to mouse</strong> at the bottom of the page.
+          Nothing changes on the mouse until you do.</li>
       </ol>
-      <p class="muted">Settings are stored on the mouse itself, so they keep working on any computer.
-        Before your first save, this page keeps a copy of your current settings so you can always go back.</p>
-      <p id="unsupported" class="warn" hidden>This browser can't talk to USB devices. Please open this page in
-        <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> on a computer.</p>
+      <p class="muted">Your settings are stored inside the mouse, so they keep working on any computer.
+        The first time you connect, this page keeps a copy of your current settings so you can always put them back.</p>
       <p><button id="preview" class="link">Just looking? Try it without a mouse</button></p>
     </section>
 
@@ -96,7 +101,8 @@
           <button id="download-backup">Download a backup file</button>
           <label class="button">Restore from a file<input type="file" id="restore-file" accept=".bin" hidden></label>
         </div>
-        <p class="muted">Backup files also work with the Windows app, and its backups work here.</p>
+        <p class="muted">To undo everything: click <strong>Put back my original settings</strong>, then <strong>Save to mouse</strong>.
+          Backup files work in both this page and the Windows app.</p>
       </section>
     </div>
   </main>
@@ -109,8 +115,62 @@
     </div>
   </footer>
 
+  <section id="help" class="help">
+    <div class="card">
+      <h2>Help</h2>
+      <details>
+        <summary>The mouse isn't in the list when I click Connect mouse</summary>
+        <ol>
+          <li>Make sure the mouse is plugged in and works as a normal mouse.</li>
+          <li>Close Redragon's software, including its icon by the clock (right-click it, then <strong>Exit</strong>).</li>
+          <li>Close any other tab or window that has this page open.</li>
+          <li>Unplug the mouse, wait five seconds, and plug it back in.</li>
+          <li>Refresh this page (press <strong>F5</strong>) and click <strong>Connect mouse</strong> again.</li>
+          <li>Still missing? Try a different USB port, ideally one directly on the computer rather than a hub.</li>
+        </ol>
+      </details>
+      <details>
+        <summary>It says "The mouse is busy" or "Couldn't connect"</summary>
+        <p>Only one program can change the mouse's settings at a time. Close Redragon's software and the
+          Impact SE Windows app, close other tabs with this page, unplug and replug the mouse, then click
+          <strong>Connect mouse</strong> again.</p>
+      </details>
+      <details>
+        <summary>It says this browser can't talk to USB devices</summary>
+        <p>Open this page in <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> on a Windows computer.
+          Firefox, Safari and phones can't connect to USB devices from a web page.</p>
+      </details>
+      <details>
+        <summary>How do I put my original settings back?</summary>
+        <ol>
+          <li>Connect the mouse and open the <strong>Backups</strong> tab.</li>
+          <li>Click <strong>Put back my original settings</strong>.</li>
+          <li>Click <strong>Save to mouse</strong>.</li>
+        </ol>
+        <p>The copy of your original settings is kept in this browser, so use the same browser on the same computer.
+          To keep a copy somewhere safe, click <strong>Download a backup file</strong> on the Backups tab. You can load it
+          later with <strong>Restore from a file</strong>, then click <strong>Save to mouse</strong>.</p>
+      </details>
+      <details>
+        <summary>It says a profile has no left click</summary>
+        <p>This stops you from ending up with a mouse that can't click. Set at least one button in that profile to
+          <strong>Left click</strong> (usually Button 1), then click <strong>Save to mouse</strong> again.</p>
+      </details>
+      <details>
+        <summary>I changed something by mistake</summary>
+        <p>If you haven't saved yet, click <strong>Discard changes</strong> at the bottom. If you already saved,
+          change it back and save again, or put your original settings back (see above).</p>
+      </details>
+      <details>
+        <summary>Something else is wrong</summary>
+        <p><a href="https://github.com/DankFrappa/impactse-control/issues/new">Report a problem</a> and describe what you see.
+          A screenshot helps.</p>
+      </details>
+    </div>
+  </section>
+
   <p class="footnote">Independent project, not affiliated with or endorsed by Redragon. Use at your own risk.
-    <a href="https://github.com/DankFrappa/impactse-control">Source and Windows app</a> · MIT License</p>
+    <a href="#help">Help</a> · <a href="https://github.com/DankFrappa/impactse-control">Source and Windows app</a> · MIT License</p>
 
   <script type="module" src="app.js"></script>
 </body>
