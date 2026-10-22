@@ -24,16 +24,14 @@ You can click **Discard changes** at any time to throw away anything you haven't
 
 ## Option 2: Download the Windows app
 
-Use this if you'd rather have a regular program on your PC. It needs Windows 10 or 11 and a free GitHub account (GitHub only lets signed-in people download these files).
+Use this if you'd rather have a regular program on your PC. It needs Windows 10 or 11.
 
-1. Sign in to GitHub (or create a free account at https://github.com/signup).
-2. Open the [list of builds](../../actions/workflows/build.yml?query=branch%3Amain+is%3Asuccess) and click the top one (it has a green check mark).
-3. Scroll to the bottom of that page. Under **Artifacts**, click **ImpactSE-win-x64** to download a zip file.
-4. Open your Downloads folder, right-click the zip, and choose **Extract All**, then **Extract**.
-5. Inside is one file, **ImpactSE.exe**. You can move it anywhere you like, such as your Desktop.
-6. Close Redragon's software if it's running (see step 2 of Option 1).
-7. Double-click **ImpactSE.exe**. The first start takes a few seconds.
-8. Change your settings, then click **Save to mouse** at the top right.
+1. Click this link to download the app: **[ImpactSE.exe](https://github.com/DankFrappa/impactse-control/releases/latest/download/ImpactSE.exe)**
+2. If your browser warns that the file "isn't commonly downloaded", click the **…** next to it and choose **Keep** (in Edge you may also need **Show more**, then **Keep anyway**).
+3. Open your Downloads folder. You can move **ImpactSE.exe** anywhere you like, such as your Desktop.
+4. Close Redragon's software if it's running (see step 2 of Option 1).
+5. Double-click **ImpactSE.exe**. The first start takes a few seconds.
+6. Change your settings, then click **Save to mouse** at the top right.
 
 **If Windows says "Windows protected your PC":** this blue box appears because the app is new and isn't signed by a big company. Click **More info**, then click **Run anyway**. You only need to do this once.
 
