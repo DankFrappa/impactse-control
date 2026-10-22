@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <!-- Symbols live inside the DLL, so the single-file download has no loose .pdb next to the exe. -->
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
 </Project>
