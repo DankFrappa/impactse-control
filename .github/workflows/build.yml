@@ -25,6 +25,10 @@ jobs:
       - name: Publish app
         run: msbuild src/ImpactSE.App/ImpactSE.App.csproj /restore /t:Publish /p:Configuration=Release /p:Platform=x64 /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:PublishDir=${{ github.workspace }}/publish/ImpactSE/
 
+      - name: Check the app's resources were published
+        run: |
+          if (-not (Test-Path publish/ImpactSE/ImpactSE.pri)) { throw "ImpactSE.pri is missing, so the app would crash on start" }
+
       - uses: actions/upload-artifact@v4
         with:
           name: ImpactSE-win-x64
