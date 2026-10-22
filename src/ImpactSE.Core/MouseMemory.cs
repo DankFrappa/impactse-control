@@ -9,9 +9,19 @@ public sealed class MouseMemory
     public const int Size = 0x500;
     public const int ProfileCount = 5;
     public const int DpiStageCount = 5;
-    public const int ButtonCount = 18;
+    public const int ButtonCount = 24;
     public const int FirstSideButton = 6;
     public const int SideButtonCount = 12;
+    public const int WheelUpButton = 22;
+    public const int WheelDownButton = 23;
+
+    /// <summary>The top buttons, numbered as in Redragon's picture, then the scroll wheel.</summary>
+    public static readonly IReadOnlyList<(int Button, string Name)> MainButtons = new[]
+    {
+        (0, "Button 1 (left)"), (1, "Button 2 (right)"), (2, "Button 3 (wheel press)"),
+        (3, "Button 4"), (4, "Button 5"), (5, "Button 6"),
+        (WheelUpButton, "Scroll wheel up"), (WheelDownButton, "Scroll wheel down"),
+    };
 
     // Memory map (see docs/protocol.md).
     public const int ActiveProfileAddress = 0x2C;
@@ -131,6 +141,14 @@ public sealed class MouseMemory
         return ProfileAddress(profile) + DpiStagesOffset + DpiStageLength * stage;
     }
 
+    /// <summary>True if some button in the profile still does a left click, so the mouse stays usable.</summary>
+    public bool HasLeftClick(int profile)
+    {
+        for (int b = 0; b < ButtonCount; b++)
+            if (GetButton(profile, b).Type == ButtonAction.LeftClickType) return true;
+        return false;
+    }
+
     static int ButtonAddress(int profile, int button)
     {
         if (button < 0 || button >= ButtonCount) throw new ArgumentOutOfRangeException(nameof(button));
@@ -174,8 +192,14 @@ public readonly record struct DpiStage(bool Enabled, int X, int Y)
 public readonly record struct ButtonAction(byte Type, byte Modifier, byte Code, byte Extra)
 {
     public const byte KeyType = 0x90;
+    public const byte ComboType = 0x8F;  // modifier bits: 1 Ctrl, 2 Shift, 4 Alt, 8 Win
+    public const byte MediaType = 0x8E;  // modifier 01, then a 16-bit consumer usage in code/extra
+    public const byte LeftClickType = 0x81;
 
     public bool IsKey => Type == KeyType;
 
     public static ButtonAction Key(byte hidUsage) => new(KeyType, 0, hidUsage, 0);
+    public static ButtonAction Combo(byte modifiers, byte hidUsage) => new(ComboType, modifiers, hidUsage, 0);
+    public static ButtonAction Function(byte type) => new(type, 0, 0, 0);
+    public static ButtonAction Media(ushort usage) => new(MediaType, 1, (byte)usage, (byte)(usage >> 8));
 }

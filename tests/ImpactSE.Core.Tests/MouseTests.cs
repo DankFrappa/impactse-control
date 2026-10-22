@@ -134,4 +134,31 @@ public class MouseTests
         Assert.Single(Backups.List());
         Assert.Equal(image, Backups.Load(first));
     }
+
+    [Fact]
+    public void Main_buttons_read_as_the_factory_layout()
+    {
+        var memory = LoadFixture("baseline.txt");
+        string[] expected = { "Left click", "Right click", "Middle click", "Back", "DPI up", "DPI down", "Scroll up", "Scroll down" };
+
+        Assert.Equal(expected, MouseMemory.MainButtons.Select(b => HidKeys.Describe(memory.GetButton(0, b.Button))));
+    }
+
+    [Fact]
+    public void Every_listed_choice_has_a_unique_encoding_and_reads_back_by_name()
+    {
+        Assert.Equal(ButtonChoices.All.Count, ButtonChoices.All.Select(c => c.Action).Distinct().Count());
+        Assert.Equal("Ctrl+C", HidKeys.Describe(ButtonChoices.All[ButtonChoices.IndexOf(ButtonAction.Combo(1, 0x06))].Action));
+        Assert.Equal("Volume up", HidKeys.Describe(ButtonAction.Media(0xE9)));
+    }
+
+    [Fact]
+    public void Profile_without_left_click_is_detected()
+    {
+        var memory = LoadFixture("baseline.txt");
+        Assert.True(memory.HasLeftClick(0));
+
+        memory.SetButton(0, 0, ButtonAction.Key(0x68));
+        Assert.False(memory.HasLeftClick(0));
+    }
 }

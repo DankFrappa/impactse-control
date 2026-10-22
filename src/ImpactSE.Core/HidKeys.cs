@@ -34,10 +34,10 @@ public static class HidKeys
         keys.Add((0x4C, "Delete"));
         keys.Add((0x4D, "End"));
         keys.Add((0x4E, "Page Down"));
-        keys.Add((0x4F, "Right"));
-        keys.Add((0x50, "Left"));
-        keys.Add((0x51, "Down"));
-        keys.Add((0x52, "Up"));
+        keys.Add((0x4F, "Arrow right"));
+        keys.Add((0x50, "Arrow left"));
+        keys.Add((0x51, "Arrow down"));
+        keys.Add((0x52, "Arrow up"));
         keys.Add((0x54, "Num /"));
         keys.Add((0x55, "Num *"));
         keys.Add((0x56, "Num -"));
@@ -55,16 +55,23 @@ public static class HidKeys
         return $"Key 0x{usage:X2}";
     }
 
-    public static string Describe(ButtonAction action) => action.Type switch
+    public static string Describe(ButtonAction action)
     {
-        ButtonAction.KeyType when action.Modifier == 0 => Name(action.Code),
-        ButtonAction.KeyType => $"{Name(action.Code)} (+ modifier 0x{action.Modifier:X2})",
-        0x81 => "Left click",
-        0x82 => "Right click",
-        0x83 => "Middle click",
-        0 => "Disabled",
-        _ => $"Mouse function 0x{action.Type:X2}",
-    };
+        if (action.Type == ButtonAction.KeyType && action.Modifier == 0) return Name(action.Code);
+        if (action.Type is ButtonAction.KeyType or ButtonAction.ComboType)
+            return string.Join("+", Modifiers(action.Modifier).Append(Name(action.Code)));
+        foreach (var (a, name) in ButtonChoices.MouseFunctions.Concat(ButtonChoices.Media))
+            if (a == action) return name;
+        return $"Mouse function 0x{action.Type:X2}";
+    }
+
+    static IEnumerable<string> Modifiers(byte bits)
+    {
+        if ((bits & 1) != 0) yield return "Ctrl";
+        if ((bits & 2) != 0) yield return "Shift";
+        if ((bits & 4) != 0) yield return "Alt";
+        if ((bits & 8) != 0) yield return "Win";
+    }
 
     /// <summary>Key presets for the 12 side buttons, in button order.</summary>
     public static readonly IReadOnlyList<(string Name, byte[] Usages)> SidePresets = new[]

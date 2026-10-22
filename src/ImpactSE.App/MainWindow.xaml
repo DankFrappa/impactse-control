@@ -52,15 +52,16 @@
                     <StackPanel x:Name="ButtonsPanel" Spacing="16">
                         <TextBlock Text="Side buttons" Style="{StaticResource SubtitleTextBlockStyle}" />
                         <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                   Text="Pick any key for each of the 12 side buttons. F13–F24 are real keys that no keyboard has, so they never clash with your number row and games can bind them cleanly." />
+                                   Text="Pick a key or action for each of the 12 side buttons. F13–F24 are real keys that no keyboard has, so they never clash with your number row and games can bind them cleanly." />
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <ComboBox x:Name="PresetBox" PlaceholderText="Choose a preset" MinWidth="240" />
                             <Button Content="Apply preset" Click="ApplyPreset_Click" />
                         </StackPanel>
                         <Grid x:Name="SideGrid" ColumnSpacing="12" RowSpacing="12" />
-                        <TextBlock Text="Main buttons" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,16,0,0" />
-                        <TextBlock x:Name="MainButtonsText" TextWrapping="Wrap"
-                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="Top buttons and wheel" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,16,0,0" />
+                        <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   Text="Numbered the same way as Redragon's picture of the mouse. One button must stay on Left click, so the mouse can always click." />
+                        <Grid x:Name="MainGrid" ColumnSpacing="12" RowSpacing="12" />
                     </StackPanel>
 
                     <!-- DPI -->

@@ -16,6 +16,7 @@ public sealed partial class MainWindow : Window
     bool _populating;
 
     readonly ComboBox[] _sideBoxes = new ComboBox[MouseMemory.SideButtonCount];
+    readonly ComboBox[] _mainBoxes = new ComboBox[MouseMemory.MainButtons.Count];
     readonly ToggleSwitch[] _dpiToggles = new ToggleSwitch[MouseMemory.DpiStageCount];
     readonly NumberBox[] _dpiBoxes = new NumberBox[MouseMemory.DpiStageCount];
 
@@ -24,6 +25,7 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1100, 820));
         BuildSideGrid();
+        BuildMainGrid();
         BuildDpiRows();
         foreach (var (name, _) in HidKeys.SidePresets) PresetBox.Items.Add(name);
         for (int p = 0; p < MouseMemory.ProfileCount; p++) ProfileBox.Items.Add($"Profile {p + 1}");
@@ -69,14 +71,36 @@ public sealed partial class MainWindow : Window
         for (int r = 0; r < 4; r++) SideGrid.RowDefinitions.Add(new RowDefinition());
         for (int i = 0; i < MouseMemory.SideButtonCount; i++)
         {
-            var box = new ComboBox { Header = $"Side button {i + 1}", HorizontalAlignment = HorizontalAlignment.Stretch, Tag = i };
-            foreach (var (_, name) in HidKeys.All) box.Items.Add(name);
-            box.SelectionChanged += SideBox_SelectionChanged;
+            var box = NewButtonBox($"Side button {i + 1}", MouseMemory.FirstSideButton + i);
             Grid.SetRow(box, i / 3);
             Grid.SetColumn(box, i % 3);
             SideGrid.Children.Add(box);
             _sideBoxes[i] = box;
         }
+    }
+
+    void BuildMainGrid()
+    {
+        for (int c = 0; c < 3; c++) MainGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(200) });
+        for (int r = 0; r < 3; r++) MainGrid.RowDefinitions.Add(new RowDefinition());
+        for (int i = 0; i < MouseMemory.MainButtons.Count; i++)
+        {
+            var (button, name) = MouseMemory.MainButtons[i];
+            var box = NewButtonBox(name, button);
+            Grid.SetRow(box, i / 3);
+            Grid.SetColumn(box, i % 3);
+            MainGrid.Children.Add(box);
+            _mainBoxes[i] = box;
+        }
+    }
+
+    /// <summary>A menu of every choice for one button; Tag holds the button's number in mouse memory.</summary>
+    ComboBox NewButtonBox(string header, int button)
+    {
+        var box = new ComboBox { Header = header, HorizontalAlignment = HorizontalAlignment.Stretch, Tag = button, MaxDropDownHeight = 480 };
+        foreach (var (_, name) in ButtonChoices.All) box.Items.Add(name);
+        box.SelectionChanged += ButtonBox_SelectionChanged;
+        return box;
     }
 
     void BuildDpiRows()
@@ -108,15 +132,12 @@ public sealed partial class MainWindow : Window
         _populating = true;
         try
         {
-            for (int i = 0; i < MouseMemory.SideButtonCount; i++)
+            foreach (var box in _sideBoxes.Concat(_mainBoxes))
             {
-                var action = _memory.GetButton(_profile, MouseMemory.FirstSideButton + i);
-                int index = action.IsKey && action.Modifier == 0 ? IndexOfKey(action.Code) : -1;
-                _sideBoxes[i].SelectedIndex = index;
-                _sideBoxes[i].PlaceholderText = HidKeys.Describe(action);
+                var action = _memory.GetButton(_profile, (int)box.Tag);
+                box.SelectedIndex = ButtonChoices.IndexOf(action);
+                box.PlaceholderText = HidKeys.Describe(action);
             }
-            MainButtonsText.Text = string.Join("   ·   ", Enumerable.Range(0, MouseMemory.FirstSideButton)
-                .Select(b => $"{b + 1}: {HidKeys.Describe(_memory.GetButton(_profile, b))}"));
 
             for (int i = 0; i < MouseMemory.DpiStageCount; i++)
             {
@@ -140,12 +161,6 @@ public sealed partial class MainWindow : Window
         UpdateDirty();
     }
 
-    static int IndexOfKey(byte usage)
-    {
-        for (int i = 0; i < HidKeys.All.Count; i++) if (HidKeys.All[i].Usage == usage) return i;
-        return -1;
-    }
-
     void UpdateDirty()
     {
         bool dirty = _memory?.HasChanges == true;
@@ -162,11 +177,10 @@ public sealed partial class MainWindow : Window
         Populate();
     }
 
-    void SideBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    void ButtonBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_populating || _memory is null || sender is not ComboBox { SelectedIndex: >= 0 } box) return;
-        int side = (int)box.Tag;
-        _memory.SetButton(_profile, MouseMemory.FirstSideButton + side, ButtonAction.Key(HidKeys.All[box.SelectedIndex].Usage));
+        _memory.SetButton(_profile, (int)box.Tag, ButtonChoices.All[box.SelectedIndex].Action);
         UpdateDirty();
     }
 
@@ -220,6 +234,13 @@ public sealed partial class MainWindow : Window
         if (_mouse is null || _memory is null) return;
         var mouse = _mouse;
         var memory = _memory;
+        for (int p = 0; p < MouseMemory.ProfileCount; p++)
+        {
+            if (memory.HasLeftClick(p)) continue;
+            Show(InfoBarSeverity.Warning, "Keep a left click",
+                $"No button in Profile {p + 1} does a left click. Set one button to Left click, then save again.");
+            return;
+        }
         SaveButton.IsEnabled = DiscardButton.IsEnabled = false;
         StatusText.Text = "Saving to the mouse…";
         try

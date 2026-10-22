@@ -36,7 +36,30 @@ Reads and writes use at most 0x20 data bytes each, as the official app does.
 | `0x40`, `0x100`, `0x1B0`, `0x260`, `0x310` | Profile 1–5 base | confirmed |
 | base + 0 | DPI header: `count 00 currentStage 00` | read only |
 | base + 4 + 6s | DPI stage s: `enabled xLo xHi yLo yHi 00`, value = DPI / 100 + 2 | confirmed |
-| base + 0x42 + 4b | Button b: `type modifier code 00`. Type `90` = keyboard key (code = HID usage). `81` left, `82` right, `83` middle | confirmed for keys |
+| base + 0x42 + 4b | Button b: `type modifier code extra` (24 buttons). See "Button actions" below | confirmed |
+| buttons 0–5 | Top buttons 1–6 as numbered in Redragon's picture (factory: left, right, middle, back, DPI up, DPI down) | confirmed |
 | buttons 6–17 | The 12 side buttons, in order | confirmed |
+| button 18 | Factory `8D` (profile cycle); not shown in Redragon's app | read only |
+| buttons 22, 23 | Scroll wheel up / down (factory `8B`, `8C`) | confirmed |
 | `0x448 + 8p` | Lighting for profile p: `?? R G B mode …` | confirmed for color |
 | `0x480`– | Macro area (all `FF` when empty) | not decoded |
+
+## Button actions
+
+From the lookup table in RDCfg.exe at 0x4a8980 (app function id → 4 bytes sent to the mouse).
+
+| Bytes | Action |
+|---|---|
+| `90 00 kk 00` | Keyboard key, HID usage `kk` |
+| `8F mm kk 00` | Key combo: modifier bits `mm` (1 Ctrl, 2 Shift, 4 Alt, 8 Win) plus key `kk` |
+| `8E 01 lo hi` | Media key, consumer usage `hi lo` (CD play/pause, B7 stop, B6 previous, B5 next, E9 volume up, EA volume down, E2 mute) |
+| `81` / `82` / `83` | Left / right / middle click |
+| `84` / `85` | Back / forward |
+| `86` / `87` | Tilt (scroll) left / right |
+| `88` / `8A` / `89` | DPI cycle / up / down |
+| `8B` / `8C` | Scroll up / down |
+| `8D` / `94` / `95` | Profile cycle / up / down |
+| `97` / `98` | Polling rate up / down |
+| `9B 04 00 00` | LED switch |
+| `00 00 00 00` | Disabled |
+| `91`, `99`, `9A`, `93`, `9D` | Macro, fire key, sniper, launch app, other: not supported yet |
