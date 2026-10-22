@@ -27,7 +27,7 @@ jobs:
 
       - name: Check the app's resources were published
         run: |
-          if (-not (Test-Path publish/ImpactSE/ImpactSE.pri)) { throw "ImpactSE.pri is missing, so the app would crash on start" }
+          if (-not (Test-Path publish/ImpactSE/resources.pri)) { throw "resources.pri is missing, so the app would crash on start" }
 
       - uses: actions/upload-artifact@v4
         with:
