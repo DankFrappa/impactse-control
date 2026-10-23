@@ -92,10 +92,13 @@ function build() {
   for (let i = 0; i < SIDE_BUTTON_COUNT; i++) $("side-grid").append(buttonSelect(`Side ${i + 1}`, FIRST_SIDE_BUTTON + i));
   for (const [button, name] of MAIN_BUTTONS) $("main-grid").append(buttonSelect(name, button));
 
-  for (const [name] of SIDE_PRESETS) $("preset").append(new Option(name));
-  $("preset").selectedIndex = 2;
+  // No preset is picked up front: presets change only the profile being edited, and only when asked.
+  $("preset").append(new Option("Choose a preset…", ""));
+  SIDE_PRESETS.forEach(([name], i) => $("preset").append(new Option(name, String(i))));
+  $("preset").addEventListener("change", () => ($("apply-preset").disabled = $("preset").value === ""));
   $("apply-preset").addEventListener("click", () => {
-    const usages = SIDE_PRESETS[$("preset").selectedIndex][1];
+    if ($("preset").value === "") return;
+    const usages = SIDE_PRESETS[Number($("preset").value)][1];
     usages.forEach((usage, i) => memory.setButton(profile, FIRST_SIDE_BUTTON + i, keyAction(usage)));
     populate();
     changed();
