@@ -122,8 +122,27 @@ main { max-width: 1000px; margin: 20px auto; padding: 0 16px; }
 .switch { display: flex; gap: 8px; align-items: center; cursor: pointer; }
 .switch input { accent-color: var(--accent); width: 18px; height: 18px; }
 
-.color-row { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
-input[type="color"] { width: 96px; height: 96px; border: 1px solid var(--line); border-radius: var(--radius); padding: 4px; background: var(--field); cursor: pointer; }
+.color-row { display: flex; flex-direction: column; gap: 16px; }
+.picker { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 400px; }
+.picker-top { display: flex; gap: 14px; }
+.spectrum {
+  position: relative; flex: 1; aspect-ratio: 1; border-radius: 6px; cursor: crosshair; touch-action: none;
+  background: linear-gradient(to right, #f00, #ff0 16.66%, #0f0 33.33%, #0ff 50%, #00f 66.66%, #f0f 83.33%, #f00);
+}
+.spectrum-white { position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(to bottom, transparent, #fff); }
+.spectrum::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: #000; opacity: var(--dim, 0); pointer-events: none; }
+.spectrum:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+.marker {
+  position: absolute; z-index: 1; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%;
+  border: 2px solid #fff; box-shadow: 0 0 0 1px #000; pointer-events: none;
+}
+.preview { width: 56px; border-radius: 6px; border: 1px solid var(--line); }
+.brightness { -webkit-appearance: none; appearance: none; height: 12px; border-radius: 6px; margin: 0; }
+.brightness::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 2px solid var(--muted); cursor: pointer; }
+.brightness::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--muted); cursor: pointer; }
+.picker-fields { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 8px; }
+.picker-fields label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.picker-fields input { width: 100%; min-width: 0; font: inherit; color: var(--text); background: var(--field); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
 .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
 .swatch { width: 36px; height: 36px; padding: 0; border-radius: 50%; border: 2px solid var(--line); }
 

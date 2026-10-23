@@ -68,7 +68,7 @@
                     <StackPanel x:Name="DpiPanel" Spacing="16" Visibility="Collapsed">
                         <TextBlock Text="DPI stages" Style="{StaticResource SubtitleTextBlockStyle}" />
                         <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                   Text="The DPI button on the mouse cycles through the stages that are switched on. Drag a slider or type a number: 200 to 10,000 DPI, in steps of 100." />
+                                   Text="The DPI button on the mouse cycles through the stages that are switched on. Drag a slider or type a number from 200 to 10,000. Numbers go up in 100s, the same as Redragon's app. Inside, the mouse works in steps of 80 DPI, so it uses the closest step to your number." />
                         <StackPanel x:Name="DpiRows" Spacing="12" />
                     </StackPanel>
 
@@ -76,7 +76,8 @@
                     <StackPanel x:Name="LightingPanel" Spacing="16" Visibility="Collapsed">
                         <TextBlock Text="Lighting color" Style="{StaticResource SubtitleTextBlockStyle}" />
                         <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                   Text="Sets this profile's lighting color. Effects and brightness come in a later version." />
+                                   Text="Sets this profile's lighting color. Click a quick color, or pick any color below. Effects come in a later version." />
+                        <StackPanel x:Name="Swatches" Orientation="Horizontal" Spacing="8" />
                         <ColorPicker x:Name="ColorWheel" IsAlphaEnabled="False" IsMoreButtonVisible="False"
                                      ColorChanged="ColorPicker_ColorChanged" HorizontalAlignment="Left" />
                     </StackPanel>

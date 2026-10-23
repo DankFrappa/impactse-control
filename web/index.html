@@ -71,16 +71,18 @@
 
       <section class="card" data-panel="dpi" hidden>
         <h2>DPI stages</h2>
-        <p class="muted">The DPI buttons step through the stages that are switched on. Drag a slider or type a number:
-          200 to 10,000, in steps of 100.</p>
+        <p class="muted">The DPI buttons step through the stages that are switched on. Drag a slider or type a number
+          from 200 to 10,000. Numbers go up in 100s, the same as Redragon's app. Inside, the mouse works in steps of 80 DPI,
+          so it uses the closest step to your number.</p>
         <div id="dpi-rows" class="dpi-rows"></div>
       </section>
 
       <section class="card" data-panel="lighting" hidden>
         <h2>Light color</h2>
+        <p class="muted">Click a quick color, or pick any color below.</p>
         <div class="color-row">
-          <input type="color" id="color" aria-label="Light color">
           <div class="swatches" id="swatches"></div>
+          <div id="color"></div>
         </div>
         <p class="muted">Effects like breathing and rainbow aren't supported yet.</p>
       </section>

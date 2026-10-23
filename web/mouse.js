@@ -169,8 +169,9 @@ function writeHeader(report, reportId, command, address, length) {
 
 /** Load the whole settings memory, then save only the bytes that changed. */
 export class ImpactMouse {
-  constructor(transport, sleep) {
+  constructor(transport, sleep = defaultSleep) {
     this.transport = transport;
+    this.sleep = sleep;
     this.protocol = new MouseProtocol(transport, sleep);
   }
 
@@ -178,14 +179,48 @@ export class ImpactMouse {
     return this.#inSession(async () => new MouseMemory(await this.protocol.read(0, MEMORY_SIZE)));
   }
 
-  /** Writes the changed bytes, asks the mouse to reload, and returns a fresh copy read back from it. */
-  async save(memory) {
+  /**
+   * Writes the changed bytes, asks the mouse to reload, and returns a fresh copy read back from it.
+   * If the mouse didn't keep some changes, it waits, reads again, and writes what is still missing
+   * one more time. log(line) gets a line for every step.
+   */
+  async save(memory, log = () => {}) {
     const changes = memory.changes();
     if (changes.length === 0) return memory;
-    return this.#inSession(async () => {
-      for (const { address, data } of changes) await this.protocol.write(address, data);
+
+    const writeRuns = async (runs) => {
+      for (const { address, data } of runs) {
+        log(`write 0x${hex(address, 3)}: ${[...data].map((b) => hex(b)).join("")}`);
+        await this.protocol.write(address, data);
+      }
+    };
+    const readBack = async (when) => {
+      const read = new MouseMemory(await this.protocol.read(0, MEMORY_SIZE));
+      const missing = memory.notKept(read);
+      log(missing.length === 0
+        ? `read back ${when}: all changes kept`
+        : `read back ${when}: not kept at ${missing.map((a) => `0x${hex(a, 3)}=${hex(read.bytes[a])}`).join(" ")}`);
+      return read;
+    };
+
+    let read = await this.#inSession(async () => {
+      await writeRuns(changes);
       await this.protocol.apply();
-      return new MouseMemory(await this.protocol.read(0, MEMORY_SIZE));
+      return readBack("after save");
+    });
+    if (memory.notKept(read).length === 0) return read;
+
+    // Read again after a pause, in case the mouse was still busy applying the settings.
+    await this.sleep(500);
+    read = await this.#inSession(() => readBack("after a pause"));
+    const missing = memory.notKeptRuns(read);
+    if (missing.length === 0) return read;
+
+    return this.#inSession(async () => {
+      log("Writing the missing bytes again.");
+      await writeRuns(missing);
+      await this.protocol.apply();
+      return readBack("after second try");
     });
   }
 
@@ -317,6 +352,25 @@ export class MouseMemory {
     d[a + 2] = rx >> 8;
     d[a + 3] = ry & 0xff;
     d[a + 4] = ry >> 8;
+    this.#keepStartStageOn(profile);
+  }
+
+  // The mouse starts on (and the DPI button returns to) the start stage, so it must be switched on.
+  // If it was just switched off, start on the first stage that is on instead.
+  #keepStartStageOn(profile) {
+    const start = this.getDpiStartStage(profile);
+    if (start < DPI_STAGE_COUNT && this.getDpiStage(profile, start).enabled) return;
+    for (let s = 0; s < DPI_STAGE_COUNT; s++) {
+      if (!this.getDpiStage(profile, s).enabled) continue;
+      this.#data[MouseMemory.profileAddress(profile) + DPI_HEADER_OFFSET + 2] = s;
+      return;
+    }
+  }
+
+  enabledDpiStageCount(profile) {
+    let n = 0;
+    for (let s = 0; s < DPI_STAGE_COUNT; s++) if (this.getDpiStage(profile, s).enabled) n++;
+    return n;
   }
 
   /** The DPI stage (0–4) the profile starts on. */
@@ -353,6 +407,29 @@ export class MouseMemory {
   loadFrom(image) {
     if (image.length !== MEMORY_SIZE) throw new MouseError("That file isn't an Impact SE backup.");
     this.#data.set(image);
+  }
+
+  /** Addresses this copy changed that readBack (read from the mouse after saving) doesn't hold. */
+  notKept(readBack) {
+    const missing = [];
+    for (const { address, data } of this.changes())
+      data.forEach((b, i) => {
+        if (readBack.bytes[address + i] !== b) missing.push(address + i);
+      });
+    return missing;
+  }
+
+  /** The changes readBack doesn't hold, as { address, data } runs ready to write again. */
+  notKeptRuns(readBack) {
+    const runs = [];
+    const missing = this.notKept(readBack);
+    for (let i = 0; i < missing.length; ) {
+      const start = missing[i];
+      let end = start;
+      while (++i < missing.length && missing[i] === end + 1) end++;
+      runs.push({ address: start, data: this.#data.slice(start, end + 1) });
+    }
+    return runs;
   }
 
   get hasChanges() {

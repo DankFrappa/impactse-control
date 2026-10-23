@@ -10,6 +10,14 @@ public sealed partial class MainWindow : Window
 {
     static readonly PollRate[] PollRates = { PollRate.Hz1000, PollRate.Hz500, PollRate.Hz250, PollRate.Hz125 };
 
+    // The same quick colors as the web page.
+    static readonly (string Name, byte R, byte G, byte B)[] QuickColors =
+    {
+        ("Red", 0xFF, 0x00, 0x00), ("Orange", 0xFF, 0x6F, 0x03), ("Yellow", 0xFF, 0xD4, 0x00),
+        ("Green", 0x00, 0xFF, 0x40), ("Cyan", 0x00, 0xE5, 0xFF), ("Blue", 0x00, 0x40, 0xFF),
+        ("Purple", 0x9B, 0x30, 0xFF), ("Pink", 0xFF, 0x00, 0xB0), ("White", 0xFF, 0xFF, 0xFF),
+    };
+
     ImpactMouse? _mouse;
     MouseMemory? _memory;
     int _profile;
@@ -28,6 +36,7 @@ public sealed partial class MainWindow : Window
         BuildSideGrid();
         BuildMainGrid();
         BuildDpiRows();
+        BuildSwatches();
         foreach (var (name, _) in HidKeys.SidePresets) PresetBox.Items.Add(name);
         foreach (var preset in ProfilePresets.All) ProfilePresetBox.Items.Add(preset.Name);
         for (int p = 0; p < MouseMemory.ProfileCount; p++) ProfileBox.Items.Add($"Profile {p + 1}");
@@ -134,6 +143,29 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    void BuildSwatches()
+    {
+        foreach (var (name, r, g, b) in QuickColors)
+        {
+            var color = Color.FromArgb(255, r, g, b);
+            // The color sits inside the button so it still shows when the button is hovered or pressed.
+            var swatch = new Button
+            {
+                Padding = new Thickness(3), CornerRadius = new CornerRadius(20),
+                Content = new Border
+                {
+                    Width = 30, Height = 30, CornerRadius = new CornerRadius(15),
+                    Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(color),
+                },
+            };
+            ToolTipService.SetToolTip(swatch, name);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(swatch, name);
+            // Setting the picker's color raises ColorChanged, which stores it like any other pick.
+            swatch.Click += (s, e) => ColorWheel.Color = color;
+            Swatches.Children.Add(swatch);
+        }
+    }
+
     // ---- Showing the current profile ----
 
     void Populate()
@@ -235,10 +267,20 @@ public sealed partial class MainWindow : Window
         if (double.IsNaN(value)) return;
         int dpi = (int)Math.Round(value / DpiStage.Step) * DpiStage.Step;
         dpi = Math.Clamp(dpi, DpiStage.Min, DpiStage.Max);
-        _memory.SetDpiStage(_profile, i, new DpiStage(_dpiToggles[i].IsOn, dpi, dpi));
-        // Keep the slider and the number box showing the same value.
+        bool on = _dpiToggles[i].IsOn;
+        if (!on && _memory.GetDpiStage(_profile, i).Enabled && _memory.EnabledDpiStageCount(_profile) == 1)
+        {
+            on = true;
+            Show(InfoBarSeverity.Warning, "Keep one stage on", "At least one DPI stage has to stay on.");
+        }
+        _memory.SetDpiStage(_profile, i, new DpiStage(on, dpi, dpi));
+        // Keep the switch, slider and number box showing what was stored.
         _populating = true;
-        try { _dpiBoxes[i].Value = _dpiSliders[i].Value = dpi; }
+        try
+        {
+            _dpiToggles[i].IsOn = on;
+            _dpiBoxes[i].Value = _dpiSliders[i].Value = dpi;
+        }
         finally { _populating = false; }
         UpdateDirty();
     }
@@ -283,10 +325,18 @@ public sealed partial class MainWindow : Window
         StatusText.Text = "Saving to the mouse…";
         try
         {
-            _memory = await Task.Run(() => mouse.Save(memory));
+            SaveLog.Add($"Saving. Editing profile {_profile + 1}; {memory.Changes().Count} change(s).");
+            var saved = await Task.Run(() => mouse.Save(memory, SaveLog.Add));
+            var notKept = memory.NotKept(saved);
+            _memory = saved;
             Populate();
             StatusText.Text = "Saved.";
-            Show(InfoBarSeverity.Success, "Saved", "Your mouse has the new settings.");
+            if (notKept.Count == 0)
+                Show(InfoBarSeverity.Success, "Saved", "Your mouse has the new settings.");
+            else
+                Show(InfoBarSeverity.Warning, "Some changes didn't stick",
+                    "The mouse didn't keep all of the changes, even after trying twice. The page now shows what the mouse has. " +
+                    "To help fix this, open Backups, click Open backups folder, and send the file save-log.txt.");
         }
         catch (Exception ex)
         {
@@ -339,5 +389,22 @@ public sealed partial class MainWindow : Window
         Banner.Title = title;
         Banner.Message = message;
         Banner.IsOpen = true;
+    }
+}
+
+/// <summary>A plain-text record of each save, next to the backups, to help diagnose saves that don't stick.</summary>
+static class SaveLog
+{
+    static string Path => System.IO.Path.Combine(Backups.Folder, "save-log.txt");
+
+    public static void Add(string line)
+    {
+        try
+        {
+            Directory.CreateDirectory(Backups.Folder);
+            File.AppendAllText(Path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}  {line}{Environment.NewLine}");
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 }

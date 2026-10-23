@@ -219,4 +219,44 @@ public class MouseTests
             Assert.True(memory.HasLeftClick(profile));
         }
     }
+
+    [Fact]
+    public void Switching_off_the_start_stage_moves_the_start_to_a_stage_that_is_on()
+    {
+        var memory = LoadFixture("baseline.txt");
+        ProfilePresets.Apply(memory, 0, ProfilePresets.All[0]);
+        Assert.Equal(0, memory.GetDpiStartStage(0));
+
+        memory.SetDpiStage(0, 0, new DpiStage(false, 400, 400));
+        Assert.Equal(1, memory.GetDpiStartStage(0));
+        memory.SetDpiStage(0, 2, new DpiStage(false, 1600, 1600));
+        Assert.Equal(1, memory.GetDpiStartStage(0));
+        Assert.Equal(3, memory.EnabledDpiStageCount(0));
+    }
+
+    [Fact]
+    public void Not_kept_lists_changes_the_mouse_did_not_hold()
+    {
+        var wanted = LoadFixture("baseline.txt");
+        wanted.SetColor(0, 0xFF, 0x00, 0x00);
+        Assert.Empty(wanted.NotKept(new MouseMemory(wanted.ToArray())));
+        Assert.Equal(new[] { 0x449, 0x44A, 0x44B }, wanted.NotKept(LoadFixture("baseline.txt")));
+    }
+
+    [Fact]
+    public void Save_writes_dropped_changes_again()
+    {
+        var fake = FakeMouse.FromDump("baseline.txt");
+        var mouse = new ImpactMouse(fake, _ => { });
+        var memory = mouse.Load();
+        memory.SetDpiStage(0, 0, new DpiStage(true, 800, 800));
+        var log = new List<string>();
+        fake.DropWrites = 1;
+
+        var saved = mouse.Save(memory, log.Add);
+
+        Assert.Empty(memory.NotKept(saved));
+        Assert.Contains(log, l => l.StartsWith("read back after save: not kept"));
+        Assert.Equal("read back after second try: all changes kept", log[^1]);
+    }
 }

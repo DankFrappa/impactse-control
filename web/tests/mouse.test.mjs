@@ -29,6 +29,7 @@ function loadDump(name) {
 /** Simulates the mouse as observed on real hardware, including zeros when no session is open. */
 class FakeMouse {
   sent = [];
+  dropWrites = 0; // how many of the next writes to ignore, to simulate a mouse that drops a change
   #session = false;
   #pendingRead = null;
 
@@ -46,6 +47,7 @@ class FakeMouse {
     const length = report[4];
     if (report[1] === 0xf5) this.#session = report[2] === 0;
     else if (report[1] === 0xf2) this.#pendingRead = report.slice(0, HEADER_LENGTH);
+    else if (report[1] === 0xf3 && this.#session && this.dropWrites > 0) this.dropWrites--;
     else if (report[1] === 0xf3 && this.#session)
       this.memory.set(report.subarray(HEADER_LENGTH, HEADER_LENGTH + length), address);
   }
@@ -216,3 +218,43 @@ test("presets change only the profile being edited", async () => {
   }
 });
 
+
+test("switching off the start stage moves the start to a stage that is on", async () => {
+  const memory = await loadFixture("baseline.txt");
+  applyPreset(memory, 0, PROFILE_PRESETS[0]);
+  assert.equal(memory.getDpiStartStage(0), 0);
+  memory.setDpiStage(0, 0, { enabled: false, x: 400 });
+  assert.equal(memory.getDpiStartStage(0), 1);
+  memory.setDpiStage(0, 2, { enabled: false, x: 1600 });
+  assert.equal(memory.getDpiStartStage(0), 1);
+  assert.equal(memory.enabledDpiStageCount(0), 3);
+});
+
+test("notKept lists changes the mouse did not hold", async () => {
+  const wanted = await loadFixture("baseline.txt");
+  wanted.setColor(0, [0xff, 0, 0]);
+  assert.deepEqual(wanted.notKept(new MouseMemory(wanted.toArray())), []);
+  assert.deepEqual(wanted.notKept(await loadFixture("baseline.txt")), [0x449, 0x44a, 0x44b]);
+});
+
+test("color picker conversions round-trip", async () => {
+  const { rgbToHsv, hsvToRgb, toHex, parseHex } = await import("../colorpicker.js");
+  for (const rgb of [[255, 0, 0], [0, 255, 64], [252, 111, 3], [255, 255, 255], [0, 0, 0], [18, 52, 86]])
+    assert.deepEqual(hsvToRgb(rgbToHsv(rgb)), rgb);
+  assert.equal(toHex([252, 111, 3]), "#FC6F03");
+  assert.deepEqual(parseHex("fc6f03"), [252, 111, 3]);
+  assert.equal(parseHex("#12345"), null);
+});
+
+test("save writes dropped changes again", async () => {
+  const fake = FakeMouse.fromDump("baseline.txt");
+  const mouse = new ImpactMouse(fake, noSleep);
+  const memory = await mouse.load();
+  memory.setDpiStage(0, 0, { enabled: true, x: 800 });
+  const log = [];
+  fake.dropWrites = 1;
+  const saved = await mouse.save(memory, (line) => log.push(line));
+  assert.deepEqual(memory.notKept(saved), []);
+  assert.ok(log.some((l) => l.startsWith("read back after save: not kept")));
+  assert.equal(log.at(-1), "read back after second try: all changes kept");
+});

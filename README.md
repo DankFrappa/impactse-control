@@ -58,6 +58,13 @@ Use this if you'd rather have a regular program on your PC. It needs Windows 10 
   **Profiles & polling**. Only the profile you're editing changes, and only after you click **Save to mouse**.
 - **Reset to factory.** Each profile has a **Reset this profile to factory settings** button.
 - **DPI sliders in the Windows app**, like the web page has. Drag or type, in steps of 100.
+- **Same color tools in both versions.** The web page now has the full color picker from the Windows app
+  (color area, brightness slider, hex and Red/Green/Blue boxes), and the Windows app has the web page's
+  one-click quick colors.
+- **More reliable saving.** Some DPI changes needed saving twice. Now, after every save, the app reads the
+  mouse back, and if a change didn't stick it checks again and sends it once more. It also keeps a start
+  stage that's switched on and won't let you switch every stage off. The Windows app writes a short
+  `save-log.txt` in its backups folder to help track down any save that still fails.
 - **DPI numbers now match Redragon's app.** The mouse counts DPI in steps of 80, which this project now reads
   the same way Redragon's software does. For example, the factory stages now show as 400, 800, 1600, 2400 and 3200.
 
@@ -94,7 +101,7 @@ Backup files work in both versions.
 - **Ready-made profiles:** Redragon's five factory profiles, plus MMO, Shooter and Everyday setups. Load one into
   the profile you're editing, or reset a profile to factory settings in one click.
 - **DPI:** switch each of the 5 stages on or off and set it with a slider anywhere from 200 to 10,000.
-- **Lighting:** a color picker for each profile.
+- **Lighting:** a full color picker plus one-click quick colors for each profile.
 - **Polling rate**, and which of the 5 profiles the mouse uses.
 - **Safe by design:**
   - Nothing reaches the mouse until you click **Save to mouse**.
