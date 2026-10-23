@@ -131,6 +131,10 @@ function build() {
       if (!Number.isFinite(dpi)) return;
       dpi = Math.min(DPI_MAX, Math.max(DPI_MIN, dpi));
       range.value = number.value = dpi;
+      if (!toggle.checked && memory.getDpiStage(profile, i).enabled && memory.enabledDpiStageCount(profile) === 1) {
+        toggle.checked = true;
+        show("warn", "At least one DPI stage has to stay on.");
+      }
       memory.setDpiStage(profile, i, { enabled: toggle.checked, x: dpi });
       row.classList.toggle("off", !toggle.checked);
       changed();
@@ -316,10 +320,13 @@ async function save() {
   changed();
   setStatus("Saving to the mouse…");
   try {
-    memory = await mouse.save(memory);
+    const saved = await mouse.save(memory);
+    const notKept = memory.notKept(saved);
+    memory = saved;
     busy = false;
     populate();
-    show("ok", "Saved. Your mouse has the new settings.");
+    if (notKept.length === 0) show("ok", "Saved. Your mouse has the new settings.");
+    else show("warn", "The mouse didn't keep all of the changes. The page now shows what the mouse has. Make the change again and click Save to mouse once more.");
   } catch (error) {
     busy = false;
     changed();

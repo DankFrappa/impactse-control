@@ -58,6 +58,9 @@ Use this if you'd rather have a regular program on your PC. It needs Windows 10 
   **Profiles & polling**. Only the profile you're editing changes, and only after you click **Save to mouse**.
 - **Reset to factory.** Each profile has a **Reset this profile to factory settings** button.
 - **DPI sliders in the Windows app**, like the web page has. Drag or type, in steps of 100.
+- **Fix:** switching off the DPI stage a profile starts on could make the mouse throw the change away and go
+  back to its default DPI stages. The app now moves the start to a stage that's on, keeps at least one stage on,
+  and warns you if the mouse ever doesn't keep a change.
 - **DPI numbers now match Redragon's app.** The mouse counts DPI in steps of 80, which this project now reads
   the same way Redragon's software does. For example, the factory stages now show as 400, 800, 1600, 2400 and 3200.
 

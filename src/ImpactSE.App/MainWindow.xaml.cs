@@ -235,10 +235,20 @@ public sealed partial class MainWindow : Window
         if (double.IsNaN(value)) return;
         int dpi = (int)Math.Round(value / DpiStage.Step) * DpiStage.Step;
         dpi = Math.Clamp(dpi, DpiStage.Min, DpiStage.Max);
-        _memory.SetDpiStage(_profile, i, new DpiStage(_dpiToggles[i].IsOn, dpi, dpi));
-        // Keep the slider and the number box showing the same value.
+        bool on = _dpiToggles[i].IsOn;
+        if (!on && _memory.GetDpiStage(_profile, i).Enabled && _memory.EnabledDpiStageCount(_profile) == 1)
+        {
+            on = true;
+            Show(InfoBarSeverity.Warning, "Keep one stage on", "At least one DPI stage has to stay on.");
+        }
+        _memory.SetDpiStage(_profile, i, new DpiStage(on, dpi, dpi));
+        // Keep the switch, slider and number box showing what was stored.
         _populating = true;
-        try { _dpiBoxes[i].Value = _dpiSliders[i].Value = dpi; }
+        try
+        {
+            _dpiToggles[i].IsOn = on;
+            _dpiBoxes[i].Value = _dpiSliders[i].Value = dpi;
+        }
         finally { _populating = false; }
         UpdateDirty();
     }
@@ -283,10 +293,16 @@ public sealed partial class MainWindow : Window
         StatusText.Text = "Saving to the mouse…";
         try
         {
-            _memory = await Task.Run(() => mouse.Save(memory));
+            var saved = await Task.Run(() => mouse.Save(memory));
+            var notKept = memory.NotKept(saved);
+            _memory = saved;
             Populate();
             StatusText.Text = "Saved.";
-            Show(InfoBarSeverity.Success, "Saved", "Your mouse has the new settings.");
+            if (notKept.Count == 0)
+                Show(InfoBarSeverity.Success, "Saved", "Your mouse has the new settings.");
+            else
+                Show(InfoBarSeverity.Warning, "Some changes didn't stick",
+                    "The mouse didn't keep all of the changes. The page now shows what the mouse has. Make the change again and save once more.");
         }
         catch (Exception ex)
         {

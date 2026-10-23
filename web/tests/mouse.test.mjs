@@ -216,3 +216,21 @@ test("presets change only the profile being edited", async () => {
   }
 });
 
+
+test("switching off the start stage moves the start to a stage that is on", async () => {
+  const memory = await loadFixture("baseline.txt");
+  applyPreset(memory, 0, PROFILE_PRESETS[0]);
+  assert.equal(memory.getDpiStartStage(0), 0);
+  memory.setDpiStage(0, 0, { enabled: false, x: 400 });
+  assert.equal(memory.getDpiStartStage(0), 1);
+  memory.setDpiStage(0, 2, { enabled: false, x: 1600 });
+  assert.equal(memory.getDpiStartStage(0), 1);
+  assert.equal(memory.enabledDpiStageCount(0), 3);
+});
+
+test("notKept lists changes the mouse did not hold", async () => {
+  const wanted = await loadFixture("baseline.txt");
+  wanted.setColor(0, [0xff, 0, 0]);
+  assert.deepEqual(wanted.notKept(new MouseMemory(wanted.toArray())), []);
+  assert.deepEqual(wanted.notKept(await loadFixture("baseline.txt")), [0x449, 0x44a, 0x44b]);
+});

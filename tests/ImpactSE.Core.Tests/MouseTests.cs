@@ -219,4 +219,27 @@ public class MouseTests
             Assert.True(memory.HasLeftClick(profile));
         }
     }
+
+    [Fact]
+    public void Switching_off_the_start_stage_moves_the_start_to_a_stage_that_is_on()
+    {
+        var memory = LoadFixture("baseline.txt");
+        ProfilePresets.Apply(memory, 0, ProfilePresets.All[0]);
+        Assert.Equal(0, memory.GetDpiStartStage(0));
+
+        memory.SetDpiStage(0, 0, new DpiStage(false, 400, 400));
+        Assert.Equal(1, memory.GetDpiStartStage(0));
+        memory.SetDpiStage(0, 2, new DpiStage(false, 1600, 1600));
+        Assert.Equal(1, memory.GetDpiStartStage(0));
+        Assert.Equal(3, memory.EnabledDpiStageCount(0));
+    }
+
+    [Fact]
+    public void Not_kept_lists_changes_the_mouse_did_not_hold()
+    {
+        var wanted = LoadFixture("baseline.txt");
+        wanted.SetColor(0, 0xFF, 0x00, 0x00);
+        Assert.Empty(wanted.NotKept(new MouseMemory(wanted.ToArray())));
+        Assert.Equal(new[] { 0x449, 0x44A, 0x44B }, wanted.NotKept(LoadFixture("baseline.txt")));
+    }
 }

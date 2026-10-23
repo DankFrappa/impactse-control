@@ -81,7 +81,27 @@ public sealed class MouseMemory
         _data[a + 2] = (byte)(x >> 8);
         _data[a + 3] = (byte)y;
         _data[a + 4] = (byte)(y >> 8);
+        KeepStartStageOn(profile);
     }
+
+    /// <summary>
+    /// The mouse starts on (and the DPI button returns to) the start stage, so it must be switched on.
+    /// If it was just switched off, start on the first stage that is on instead.
+    /// </summary>
+    void KeepStartStageOn(int profile)
+    {
+        int start = GetDpiStartStage(profile);
+        if (start < DpiStageCount && GetDpiStage(profile, start).Enabled) return;
+        for (int s = 0; s < DpiStageCount; s++)
+        {
+            if (!GetDpiStage(profile, s).Enabled) continue;
+            _data[ProfileAddress(profile) + DpiHeaderOffset + 2] = (byte)s;
+            return;
+        }
+    }
+
+    public int EnabledDpiStageCount(int profile) =>
+        Enumerable.Range(0, DpiStageCount).Count(s => GetDpiStage(profile, s).Enabled);
 
     /// <summary>The DPI stage (0–4) the profile starts on.</summary>
     public int GetDpiStartStage(int profile) => _data[ProfileAddress(profile) + DpiHeaderOffset + 2];
@@ -131,6 +151,16 @@ public sealed class MouseMemory
     }
 
     public bool HasChanges => Changes().Count > 0;
+
+    /// <summary>Addresses this copy changed that <paramref name="readBack"/> (read from the mouse after saving) doesn't hold.</summary>
+    public IReadOnlyList<int> NotKept(MouseMemory readBack)
+    {
+        var missing = new List<int>();
+        foreach (var (address, data) in Changes())
+            for (int i = 0; i < data.Length; i++)
+                if (readBack._data[address + i] != data[i]) missing.Add(address + i);
+        return missing;
+    }
 
     /// <summary>Contiguous runs of changed bytes, as (address, new bytes).</summary>
     public IReadOnlyList<(int Address, byte[] Data)> Changes()

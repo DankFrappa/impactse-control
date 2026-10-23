@@ -317,6 +317,25 @@ export class MouseMemory {
     d[a + 2] = rx >> 8;
     d[a + 3] = ry & 0xff;
     d[a + 4] = ry >> 8;
+    this.#keepStartStageOn(profile);
+  }
+
+  // The mouse starts on (and the DPI button returns to) the start stage, so it must be switched on.
+  // If it was just switched off, start on the first stage that is on instead.
+  #keepStartStageOn(profile) {
+    const start = this.getDpiStartStage(profile);
+    if (start < DPI_STAGE_COUNT && this.getDpiStage(profile, start).enabled) return;
+    for (let s = 0; s < DPI_STAGE_COUNT; s++) {
+      if (!this.getDpiStage(profile, s).enabled) continue;
+      this.#data[MouseMemory.profileAddress(profile) + DPI_HEADER_OFFSET + 2] = s;
+      return;
+    }
+  }
+
+  enabledDpiStageCount(profile) {
+    let n = 0;
+    for (let s = 0; s < DPI_STAGE_COUNT; s++) if (this.getDpiStage(profile, s).enabled) n++;
+    return n;
   }
 
   /** The DPI stage (0–4) the profile starts on. */
@@ -353,6 +372,16 @@ export class MouseMemory {
   loadFrom(image) {
     if (image.length !== MEMORY_SIZE) throw new MouseError("That file isn't an Impact SE backup.");
     this.#data.set(image);
+  }
+
+  /** Addresses this copy changed that readBack (read from the mouse after saving) doesn't hold. */
+  notKept(readBack) {
+    const missing = [];
+    for (const { address, data } of this.changes())
+      data.forEach((b, i) => {
+        if (readBack.bytes[address + i] !== b) missing.push(address + i);
+      });
+    return missing;
   }
 
   get hasChanges() {
