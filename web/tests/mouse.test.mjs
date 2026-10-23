@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url";
 import {
   ImpactMouse, MouseProtocol, MouseError, MouseMemory, MEMORY_SIZE, HEADER_LENGTH, CHUNK_LENGTH,
   FIRST_SIDE_BUTTON, MAIN_BUTTONS, SIDE_PRESETS, ALL_CHOICES, keyAction, comboAction, mediaAction,
-  describe, choiceIndex, sameAction,
+  describe, choiceIndex, sameAction, PROFILE_PRESETS, applyPreset, dpiFromRaw, dpiToRaw, DPI_MIN, DPI_MAX,
+  DPI_STEP, DPI_STAGE_COUNT, BUTTON_COUNT, POLL_RATE_ADDRESS, LIGHTING_ADDRESS,
 } from "../mouse.js";
 import { DEMO_MEMORY_HEX } from "../demo.js";
 
@@ -140,7 +141,7 @@ test("save with no changes sends nothing", async () => {
 
 test("DPI outside the supported range is rejected", async () => {
   const memory = await loadFixture("baseline.txt");
-  for (const dpi of [50, 150, 10100])
+  for (const dpi of [50, 100, 150, 10100])
     assert.throws(() => memory.setDpiStage(0, 0, { enabled: true, x: dpi }), RangeError);
 });
 
@@ -163,3 +164,55 @@ test("the preview data is the baseline dump", () => {
   const bytes = Uint8Array.from(DEMO_MEMORY_HEX.match(/../g), (h) => parseInt(h, 16));
   assert.deepEqual(new MouseMemory(bytes).toArray(), loadDump("baseline.txt"));
 });
+
+test("factory DPI stages read as Redragon's defaults", async () => {
+  // Redragon's default profiles list 400/800/1600/2400/3200; the mouse stores 5/10/20/30/40.
+  const memory = await loadFixture("baseline.txt");
+  const stages = Array.from({ length: DPI_STAGE_COUNT }, (_, s) => memory.getDpiStage(1, s).x);
+  assert.deepEqual(stages, [400, 800, 1600, 2400, 3200]);
+});
+
+test("every DPI step survives a round trip", () => {
+  for (let dpi = DPI_MIN; dpi <= DPI_MAX; dpi += DPI_STEP) assert.equal(dpiFromRaw(dpiToRaw(dpi)), dpi);
+});
+
+test("a factory preset writes Redragon's values", async () => {
+  const memory = await loadFixture("dpi800-red-500hz.txt");
+  applyPreset(memory, 0, PROFILE_PRESETS[2]);
+  const base = MouseMemory.profileAddress(0);
+  assert.deepEqual([...memory.bytes.slice(base, base + 4)], [5, 0, 2, 0]);
+  assert.deepEqual(
+    [...memory.bytes.slice(base + 4, base + 34)],
+    [1, 5, 0, 5, 0, 0, 1, 10, 0, 10, 0, 0, 1, 20, 0, 20, 0, 0, 1, 30, 0, 30, 0, 0, 1, 40, 0, 40, 0, 0],
+  );
+  assert.equal(memory.getPollRate(0), 1);
+  assert.deepEqual(memory.getColor(0), [0x00, 0xff, 0x00]);
+  assert.deepEqual(
+    MAIN_BUTTONS.map(([b]) => describe(memory.getButton(0, b))),
+    ["Left click", "Right click", "Middle click", "Back", "DPI up", "DPI down", "Scroll up", "Scroll down"],
+  );
+  assert.equal(describe(memory.getButton(0, FIRST_SIDE_BUTTON)), "1");
+  assert.equal(describe(memory.getButton(0, FIRST_SIDE_BUTTON + 11)), "Num -");
+});
+
+test("presets change only the profile being edited", async () => {
+  for (const profile of [0, 4]) {
+    for (const preset of PROFILE_PRESETS) {
+      const memory = await loadFixture("baseline.txt");
+      applyPreset(memory, profile, preset);
+      const start = MouseMemory.profileAddress(profile);
+      const end = start + 0x42 + 4 * BUTTON_COUNT;
+      const poll = POLL_RATE_ADDRESS + 2 * profile;
+      const light = LIGHTING_ADDRESS + 8 * profile;
+      for (const { address, data } of memory.changes()) {
+        const ok =
+          (address >= start && address + data.length <= end) ||
+          address === poll ||
+          (address > light && address + data.length <= light + 4);
+        assert.ok(ok, `${preset.name} changed 0x${address.toString(16)}`);
+      }
+      assert.ok(memory.hasLeftClick(profile));
+    }
+  }
+});
+

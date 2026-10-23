@@ -15,7 +15,7 @@ You need **Google Chrome** or **Microsoft Edge** on a Windows computer. Other br
 3. Open **https://dankfrappa.github.io/impactse-control/** in Chrome or Edge.
 4. Click the red **Connect mouse** button at the top right.
 5. A small box pops up asking which device to connect. Click the mouse in the list (there should be only one), then click **Connect**.
-6. Your current settings appear. Use the tabs (**Buttons**, **DPI**, **Lighting**, **Polling & profiles**, **Backups**) to change what you want.
+6. Your current settings appear. Use the tabs (**Buttons**, **DPI**, **Lighting**, **Profiles & polling**, **Backups**) to change what you want.
 7. Click **Save to mouse** at the bottom of the page. Nothing changes on the mouse until you do this.
 
 You can click **Discard changes** at any time to throw away anything you haven't saved yet. Next time you visit the page, it reconnects to your mouse by itself.
@@ -49,6 +49,22 @@ Use this if you'd rather have a regular program on your PC. It needs Windows 10 
 - **"No button in Profile … does a left click".** This protects you from ending up with a mouse that can't click. Set at least one button in that profile to **Left click**, then save again.
 - **Something else.** [Open an issue](../../issues/new) and describe what you see. A screenshot helps.
 
+## What's new
+
+**October 23, 2026**
+
+- **Ready-made profiles.** Load Redragon's factory settings into any profile with one click, or start from a
+  ready-made setup: MMO (side buttons on F13–F24), Shooter (low DPI) or Everyday and media. Find them under
+  **Profiles & polling**. Only the profile you're editing changes, and only after you click **Save to mouse**.
+- **Reset to factory.** Each profile has a **Reset this profile to factory settings** button.
+- **DPI sliders in the Windows app**, like the web page has. Drag or type, in steps of 100.
+- **DPI numbers now match Redragon's app.** The mouse counts DPI in steps of 80, which this project now reads
+  the same way Redragon's software does. For example, the factory stages now show as 400, 800, 1600, 2400 and 3200.
+
+**October 22, 2026**
+
+- First release of the Windows app and the web page: every button, DPI, light color, polling rate, profiles and backups.
+
 ## Putting your original settings back
 
 Both versions keep a copy of your mouse's settings from before you first changed anything.
@@ -75,7 +91,9 @@ Backup files work in both versions.
   - a media key: play/pause, volume, mute
   - a shortcut like Copy, Paste or Alt+Tab
 - **One-click side-button presets.** Choose number row 1–0, numpad, or **F13–F24**. F13–F24 are real keys that no keyboard has, so games can bind them without clashing with your keyboard.
-- **DPI:** switch each of the 5 stages on or off and set it anywhere from 100 to 10,000.
+- **Ready-made profiles:** Redragon's five factory profiles, plus MMO, Shooter and Everyday setups. Load one into
+  the profile you're editing, or reset a profile to factory settings in one click.
+- **DPI:** switch each of the 5 stages on or off and set it with a slider anywhere from 200 to 10,000.
 - **Lighting:** a color picker for each profile.
 - **Polling rate**, and which of the 5 profiles the mouse uses.
 - **Safe by design:**

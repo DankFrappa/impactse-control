@@ -113,6 +113,7 @@ public class MouseTests
 
     [Theory]
     [InlineData(50)]
+    [InlineData(100)]
     [InlineData(150)]
     [InlineData(10100)]
     public void Dpi_outside_the_supported_range_is_rejected(int dpi)
@@ -160,5 +161,62 @@ public class MouseTests
 
         memory.SetButton(0, 0, ButtonAction.Key(0x68));
         Assert.False(memory.HasLeftClick(0));
+    }
+
+    [Fact]
+    public void Factory_dpi_stages_read_as_redragons_defaults()
+    {
+        // Redragon's default profiles list 400/800/1600/2400/3200; the mouse stores 5/10/20/30/40.
+        var memory = LoadFixture("baseline.txt");
+        Assert.Equal(new[] { 400, 800, 1600, 2400, 3200 },
+            Enumerable.Range(0, MouseMemory.DpiStageCount).Select(s => memory.GetDpiStage(1, s).X));
+    }
+
+    [Fact]
+    public void Every_dpi_step_survives_a_round_trip()
+    {
+        for (int dpi = DpiStage.Min; dpi <= DpiStage.Max; dpi += DpiStage.Step)
+            Assert.Equal(dpi, DpiStage.FromRaw(DpiStage.ToRaw(dpi)));
+    }
+
+    [Fact]
+    public void Factory_preset_writes_redragons_values()
+    {
+        var memory = LoadFixture("dpi800-red-500hz.txt");
+        ProfilePresets.Apply(memory, 0, ProfilePresets.All[2]);
+
+        int b = MouseMemory.ProfileAddress(0);
+        Assert.Equal(new byte[] { 5, 0, 2, 0 }, memory.Bytes.Slice(b, 4).ToArray());
+        Assert.Equal(new byte[] { 1, 5, 0, 5, 0, 0, 1, 10, 0, 10, 0, 0, 1, 20, 0, 20, 0, 0, 1, 30, 0, 30, 0, 0, 1, 40, 0, 40, 0, 0 },
+            memory.Bytes.Slice(b + 4, 30).ToArray());
+        Assert.Equal(PollRate.Hz1000, memory.GetPollRate(0));
+        Assert.Equal(((byte)0x00, (byte)0xFF, (byte)0x00), memory.GetColor(0));
+        Assert.Equal(new[] { "Left click", "Right click", "Middle click", "Back", "DPI up", "DPI down", "Scroll up", "Scroll down" },
+            MouseMemory.MainButtons.Select(m => HidKeys.Describe(memory.GetButton(0, m.Button))));
+        Assert.Equal("1", HidKeys.Describe(memory.GetButton(0, MouseMemory.FirstSideButton)));
+        Assert.Equal("Num -", HidKeys.Describe(memory.GetButton(0, MouseMemory.FirstSideButton + 11)));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(4)]
+    public void Presets_change_only_the_profile_being_edited(int profile)
+    {
+        foreach (var preset in ProfilePresets.All)
+        {
+            var memory = LoadFixture("baseline.txt");
+            ProfilePresets.Apply(memory, profile, preset);
+
+            int start = MouseMemory.ProfileAddress(profile);
+            int end = start + 0x42 + 4 * MouseMemory.ButtonCount;
+            int poll = MouseMemory.PollRateAddress + 2 * profile;
+            int light = MouseMemory.LightingAddress + 8 * profile;
+            Assert.All(memory.Changes(), c => Assert.True(
+                (c.Address >= start && c.Address + c.Data.Length <= end)
+                || c.Address == poll
+                || (c.Address > light && c.Address + c.Data.Length <= light + 4),
+                $"{preset.Name} changed 0x{c.Address:X3}"));
+            Assert.True(memory.HasLeftClick(profile));
+        }
     }
 }

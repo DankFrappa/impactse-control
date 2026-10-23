@@ -41,7 +41,7 @@
                 <NavigationViewItem Content="Buttons" Tag="Buttons" Icon="Keyboard" />
                 <NavigationViewItem Content="DPI" Tag="Dpi" Icon="Target" />
                 <NavigationViewItem Content="Lighting" Tag="Lighting" Icon="FontColor" />
-                <NavigationViewItem Content="Performance" Tag="Performance" Icon="Sync" />
+                <NavigationViewItem Content="Profiles &amp; polling" Tag="Performance" Icon="Sync" />
                 <NavigationViewItem Content="Backups" Tag="Backups" Icon="Save" />
             </NavigationView.MenuItems>
 
@@ -68,7 +68,7 @@
                     <StackPanel x:Name="DpiPanel" Spacing="16" Visibility="Collapsed">
                         <TextBlock Text="DPI stages" Style="{StaticResource SubtitleTextBlockStyle}" />
                         <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                   Text="The DPI button on the mouse cycles through the stages that are switched on. 100 to 10,000 DPI, in steps of 100." />
+                                   Text="The DPI button on the mouse cycles through the stages that are switched on. Drag a slider or type a number: 200 to 10,000 DPI, in steps of 100." />
                         <StackPanel x:Name="DpiRows" Spacing="12" />
                     </StackPanel>
 
@@ -83,7 +83,18 @@
 
                     <!-- Performance -->
                     <StackPanel x:Name="PerformancePanel" Spacing="16" Visibility="Collapsed">
-                        <TextBlock Text="Polling rate" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Ready-made profiles" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   Text="Fill the profile you're editing with Redragon's factory settings or a ready-made setup. It sets the buttons, DPI and polling rate (and the light color for factory profiles). Your other profiles aren't touched, and nothing changes on the mouse until you click Save to mouse." />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ComboBox x:Name="ProfilePresetBox" PlaceholderText="Choose a ready-made profile" MinWidth="280"
+                                      SelectionChanged="ProfilePresetBox_SelectionChanged" />
+                            <Button x:Name="ApplyProfilePresetButton" Content="Load into this profile"
+                                    Click="ApplyProfilePreset_Click" IsEnabled="False" />
+                        </StackPanel>
+                        <TextBlock x:Name="ProfilePresetText" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <Button Content="Reset this profile to factory settings" Click="FactoryReset_Click" />
+                        <TextBlock Text="Polling rate" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,16,0,0" />
                         <RadioButtons x:Name="PollRateButtons" SelectionChanged="PollRate_SelectionChanged">
                             <x:String>1000 Hz</x:String>
                             <x:String>500 Hz</x:String>
