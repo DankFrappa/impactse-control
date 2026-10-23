@@ -234,3 +234,12 @@ test("notKept lists changes the mouse did not hold", async () => {
   assert.deepEqual(wanted.notKept(new MouseMemory(wanted.toArray())), []);
   assert.deepEqual(wanted.notKept(await loadFixture("baseline.txt")), [0x449, 0x44a, 0x44b]);
 });
+
+test("color picker conversions round-trip", async () => {
+  const { rgbToHsv, hsvToRgb, toHex, parseHex } = await import("../colorpicker.js");
+  for (const rgb of [[255, 0, 0], [0, 255, 64], [252, 111, 3], [255, 255, 255], [0, 0, 0], [18, 52, 86]])
+    assert.deepEqual(hsvToRgb(rgbToHsv(rgb)), rgb);
+  assert.equal(toHex([252, 111, 3]), "#FC6F03");
+  assert.deepEqual(parseHex("fc6f03"), [252, 111, 3]);
+  assert.equal(parseHex("#12345"), null);
+});

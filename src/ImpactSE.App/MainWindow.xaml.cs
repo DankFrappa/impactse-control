@@ -10,6 +10,14 @@ public sealed partial class MainWindow : Window
 {
     static readonly PollRate[] PollRates = { PollRate.Hz1000, PollRate.Hz500, PollRate.Hz250, PollRate.Hz125 };
 
+    // The same quick colors as the web page.
+    static readonly (string Name, byte R, byte G, byte B)[] QuickColors =
+    {
+        ("Red", 0xFF, 0x00, 0x00), ("Orange", 0xFF, 0x6F, 0x03), ("Yellow", 0xFF, 0xD4, 0x00),
+        ("Green", 0x00, 0xFF, 0x40), ("Cyan", 0x00, 0xE5, 0xFF), ("Blue", 0x00, 0x40, 0xFF),
+        ("Purple", 0x9B, 0x30, 0xFF), ("Pink", 0xFF, 0x00, 0xB0), ("White", 0xFF, 0xFF, 0xFF),
+    };
+
     ImpactMouse? _mouse;
     MouseMemory? _memory;
     int _profile;
@@ -28,6 +36,7 @@ public sealed partial class MainWindow : Window
         BuildSideGrid();
         BuildMainGrid();
         BuildDpiRows();
+        BuildSwatches();
         foreach (var (name, _) in HidKeys.SidePresets) PresetBox.Items.Add(name);
         foreach (var preset in ProfilePresets.All) ProfilePresetBox.Items.Add(preset.Name);
         for (int p = 0; p < MouseMemory.ProfileCount; p++) ProfileBox.Items.Add($"Profile {p + 1}");
@@ -131,6 +140,29 @@ public sealed partial class MainWindow : Window
             _dpiToggles[i] = toggle;
             _dpiBoxes[i] = box;
             _dpiSliders[i] = slider;
+        }
+    }
+
+    void BuildSwatches()
+    {
+        foreach (var (name, r, g, b) in QuickColors)
+        {
+            var color = Color.FromArgb(255, r, g, b);
+            // The color sits inside the button so it still shows when the button is hovered or pressed.
+            var swatch = new Button
+            {
+                Padding = new Thickness(3), CornerRadius = new CornerRadius(20),
+                Content = new Border
+                {
+                    Width = 30, Height = 30, CornerRadius = new CornerRadius(15),
+                    Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(color),
+                },
+            };
+            ToolTipService.SetToolTip(swatch, name);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(swatch, name);
+            // Setting the picker's color raises ColorChanged, which stores it like any other pick.
+            swatch.Click += (s, e) => ColorWheel.Color = color;
+            Swatches.Children.Add(swatch);
         }
     }
 

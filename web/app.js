@@ -4,16 +4,21 @@ import {
   SIDE_PRESETS, PROFILE_PRESETS, applyPreset, choiceIndex, describe, keyAction,
 } from "./mouse.js";
 import { DEMO_MEMORY_HEX } from "./demo.js";
+import { ColorPicker, parseHex } from "./colorpicker.js";
 
 const $ = (id) => document.getElementById(id);
 const ORIGINAL_KEY = "impactse-original";
-const SWATCHES = ["#ff0000", "#ff6f03", "#ffd400", "#00ff40", "#00e5ff", "#0040ff", "#9b30ff", "#ff00b0", "#ffffff"];
+const SWATCHES = [
+  ["Red", "#ff0000"], ["Orange", "#ff6f03"], ["Yellow", "#ffd400"], ["Green", "#00ff40"], ["Cyan", "#00e5ff"],
+  ["Blue", "#0040ff"], ["Purple", "#9b30ff"], ["Pink", "#ff00b0"], ["White", "#ffffff"],
+];
 
 let mouse = null;
 let preview = false;
 let memory = null;
 let profile = 0;
 let busy = false;
+let picker = null;
 
 const buttonSelects = [];
 const dpiRows = [];
@@ -22,7 +27,6 @@ const dpiRows = [];
 
 const toHex = (bytes) => Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 const fromHex = (text) => Uint8Array.from(text.match(/../g) ?? [], (h) => parseInt(h, 16));
-const colorHex = ([r, g, b]) => "#" + toHex([r, g, b]);
 
 function storage(action) {
   // Browser storage can be unavailable (private windows, blocked site data); backups still download.
@@ -146,18 +150,21 @@ function build() {
     dpiRows.push({ row, toggle, range, number });
   }
 
-  $("color").addEventListener("input", () => {
-    memory.setColor(profile, Array.from(fromHex($("color").value.slice(1))));
+  picker = new ColorPicker($("color"), (rgb) => {
+    memory.setColor(profile, rgb);
     changed();
   });
-  for (const swatch of SWATCHES) {
+  for (const [name, swatch] of SWATCHES) {
     const b = document.createElement("button");
     b.className = "swatch";
     b.style.background = swatch;
-    b.setAttribute("aria-label", swatch);
+    b.title = name;
+    b.setAttribute("aria-label", name);
     b.addEventListener("click", () => {
-      $("color").value = swatch;
-      $("color").dispatchEvent(new Event("input"));
+      const rgb = parseHex(swatch);
+      picker.set(rgb);
+      memory.setColor(profile, rgb);
+      changed();
     });
     $("swatches").append(b);
   }
@@ -226,7 +233,7 @@ function populate() {
     row.classList.toggle("off", !stage.enabled);
   });
 
-  $("color").value = colorHex(memory.getColor(profile));
+  picker.set(memory.getColor(profile));
 
   const rate = memory.getPollRate(profile);
   for (const b of $("poll").children) b.setAttribute("aria-checked", String(Number(b.dataset.code) === rate));
