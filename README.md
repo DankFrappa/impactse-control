@@ -61,9 +61,10 @@ Use this if you'd rather have a regular program on your PC. It needs Windows 10 
 - **Same color tools in both versions.** The web page now has the full color picker from the Windows app
   (color area, brightness slider, hex and Red/Green/Blue boxes), and the Windows app has the web page's
   one-click quick colors.
-- **Fix:** switching off the DPI stage a profile starts on could make the mouse throw the change away and go
-  back to its default DPI stages. The app now moves the start to a stage that's on, keeps at least one stage on,
-  and warns you if the mouse ever doesn't keep a change.
+- **More reliable saving.** Some DPI changes needed saving twice. Now, after every save, the app reads the
+  mouse back, and if a change didn't stick it checks again and sends it once more. It also keeps a start
+  stage that's switched on and won't let you switch every stage off. The Windows app writes a short
+  `save-log.txt` in its backups folder to help track down any save that still fails.
 - **DPI numbers now match Redragon's app.** The mouse counts DPI in steps of 80, which this project now reads
   the same way Redragon's software does. For example, the factory stages now show as 400, 800, 1600, 2400 and 3200.
 

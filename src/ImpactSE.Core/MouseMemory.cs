@@ -162,6 +162,20 @@ public sealed class MouseMemory
         return missing;
     }
 
+    /// <summary>The changes <paramref name="readBack"/> doesn't hold, as runs ready to write again.</summary>
+    public IReadOnlyList<(int Address, byte[] Data)> NotKeptRuns(MouseMemory readBack)
+    {
+        var runs = new List<(int, byte[])>();
+        var missing = NotKept(readBack);
+        for (int i = 0; i < missing.Count;)
+        {
+            int start = missing[i], end = start;
+            while (++i < missing.Count && missing[i] == end + 1) end++;
+            runs.Add((start, _data.AsSpan(start, end - start + 1).ToArray()));
+        }
+        return runs;
+    }
+
     /// <summary>Contiguous runs of changed bytes, as (address, new bytes).</summary>
     public IReadOnlyList<(int Address, byte[] Data)> Changes()
     {

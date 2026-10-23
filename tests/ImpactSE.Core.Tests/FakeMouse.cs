@@ -11,6 +11,8 @@ sealed class FakeMouse : IFeatureTransport
 {
     public readonly byte[] Memory;
     public readonly List<byte[]> Sent = new();
+    /// <summary>How many of the next writes to ignore, to simulate a mouse that drops a change.</summary>
+    public int DropWrites;
     bool _session;
     byte[]? _pendingRead;
 
@@ -42,6 +44,9 @@ sealed class FakeMouse : IFeatureTransport
                 break;
             case 0xF2:
                 _pendingRead = report[..MouseProtocol.HeaderLength];
+                break;
+            case 0xF3 when _session && DropWrites > 0:
+                DropWrites--;
                 break;
             case 0xF3 when _session:
                 report.AsSpan(MouseProtocol.HeaderLength, length).CopyTo(Memory.AsSpan(address));

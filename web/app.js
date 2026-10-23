@@ -327,13 +327,13 @@ async function save() {
   changed();
   setStatus("Saving to the mouse…");
   try {
-    const saved = await mouse.save(memory);
+    const saved = await mouse.save(memory, (line) => console.info(`[Impact SE] ${line}`));
     const notKept = memory.notKept(saved);
     memory = saved;
     busy = false;
     populate();
     if (notKept.length === 0) show("ok", "Saved. Your mouse has the new settings.");
-    else show("warn", "The mouse didn't keep all of the changes. The page now shows what the mouse has. Make the change again and click Save to mouse once more.");
+    else show("warn", "The mouse didn't keep all of the changes, even after trying twice. The page now shows what the mouse has. Please report this (see Help at the bottom of the page).");
   } catch (error) {
     busy = false;
     changed();

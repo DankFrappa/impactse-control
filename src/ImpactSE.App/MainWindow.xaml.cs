@@ -325,7 +325,8 @@ public sealed partial class MainWindow : Window
         StatusText.Text = "Saving to the mouse…";
         try
         {
-            var saved = await Task.Run(() => mouse.Save(memory));
+            SaveLog.Add($"Saving. Editing profile {_profile + 1}; {memory.Changes().Count} change(s).");
+            var saved = await Task.Run(() => mouse.Save(memory, SaveLog.Add));
             var notKept = memory.NotKept(saved);
             _memory = saved;
             Populate();
@@ -334,7 +335,8 @@ public sealed partial class MainWindow : Window
                 Show(InfoBarSeverity.Success, "Saved", "Your mouse has the new settings.");
             else
                 Show(InfoBarSeverity.Warning, "Some changes didn't stick",
-                    "The mouse didn't keep all of the changes. The page now shows what the mouse has. Make the change again and save once more.");
+                    "The mouse didn't keep all of the changes, even after trying twice. The page now shows what the mouse has. " +
+                    "To help fix this, open Backups, click Open backups folder, and send the file save-log.txt.");
         }
         catch (Exception ex)
         {
@@ -387,5 +389,22 @@ public sealed partial class MainWindow : Window
         Banner.Title = title;
         Banner.Message = message;
         Banner.IsOpen = true;
+    }
+}
+
+/// <summary>A plain-text record of each save, next to the backups, to help diagnose saves that don't stick.</summary>
+static class SaveLog
+{
+    static string Path => System.IO.Path.Combine(Backups.Folder, "save-log.txt");
+
+    public static void Add(string line)
+    {
+        try
+        {
+            Directory.CreateDirectory(Backups.Folder);
+            File.AppendAllText(Path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}  {line}{Environment.NewLine}");
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 }
