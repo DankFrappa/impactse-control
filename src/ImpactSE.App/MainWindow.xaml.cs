@@ -19,6 +19,7 @@ public sealed partial class MainWindow : Window
     readonly ComboBox[] _mainBoxes = new ComboBox[MouseMemory.MainButtons.Count];
     readonly ToggleSwitch[] _dpiToggles = new ToggleSwitch[MouseMemory.DpiStageCount];
     readonly NumberBox[] _dpiBoxes = new NumberBox[MouseMemory.DpiStageCount];
+    readonly Slider[] _dpiSliders = new Slider[MouseMemory.DpiStageCount];
 
     public MainWindow()
     {
@@ -28,6 +29,7 @@ public sealed partial class MainWindow : Window
         BuildMainGrid();
         BuildDpiRows();
         foreach (var (name, _) in HidKeys.SidePresets) PresetBox.Items.Add(name);
+        foreach (var preset in ProfilePresets.All) ProfilePresetBox.Items.Add(preset.Name);
         for (int p = 0; p < MouseMemory.ProfileCount; p++) ProfileBox.Items.Add($"Profile {p + 1}");
         Nav.SelectedItem = Nav.MenuItems[0];
         _ = ConnectAsync();
@@ -113,14 +115,22 @@ public sealed partial class MainWindow : Window
                 Minimum = DpiStage.Min, Maximum = DpiStage.Max, SmallChange = DpiStage.Step, LargeChange = 1000,
                 SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline, Width = 180, Tag = i,
             };
+            var slider = new Slider
+            {
+                Minimum = DpiStage.Min, Maximum = DpiStage.Max, StepFrequency = DpiStage.Step, SmallChange = DpiStage.Step,
+                LargeChange = 1000, Width = 360, VerticalAlignment = VerticalAlignment.Center, Tag = i,
+            };
             toggle.Toggled += Dpi_Changed;
             box.ValueChanged += (s, e) => Dpi_Changed(s, null!);
+            slider.ValueChanged += (s, e) => Dpi_Changed(s, null!);
             var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16 };
             row.Children.Add(toggle);
+            row.Children.Add(slider);
             row.Children.Add(box);
             DpiRows.Children.Add(row);
             _dpiToggles[i] = toggle;
             _dpiBoxes[i] = box;
+            _dpiSliders[i] = slider;
         }
     }
 
@@ -143,7 +153,7 @@ public sealed partial class MainWindow : Window
             {
                 var stage = _memory.GetDpiStage(_profile, i);
                 _dpiToggles[i].IsOn = stage.Enabled;
-                _dpiBoxes[i].Value = Math.Clamp(stage.X, DpiStage.Min, DpiStage.Max);
+                _dpiBoxes[i].Value = _dpiSliders[i].Value = Math.Clamp(stage.X, DpiStage.Min, DpiStage.Max);
             }
 
             var (r, g, b) = _memory.GetColor(_profile);
@@ -193,15 +203,43 @@ public sealed partial class MainWindow : Window
         Populate();
     }
 
+    void ProfilePresetBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        int i = ProfilePresetBox.SelectedIndex;
+        ApplyProfilePresetButton.IsEnabled = i >= 0;
+        ProfilePresetText.Text = i >= 0 ? ProfilePresets.All[i].Description : "";
+    }
+
+    void ApplyProfilePreset_Click(object sender, RoutedEventArgs e)
+    {
+        if (ProfilePresetBox.SelectedIndex >= 0) LoadPreset(ProfilePresets.All[ProfilePresetBox.SelectedIndex]);
+    }
+
+    // Profile 1 resets to factory profile 1, and so on, as the mouse ships.
+    void FactoryReset_Click(object sender, RoutedEventArgs e) => LoadPreset(ProfilePresets.All[_profile]);
+
+    void LoadPreset(ProfilePresets.Preset preset)
+    {
+        if (_memory is null) return;
+        ProfilePresets.Apply(_memory, _profile, preset);
+        Populate();
+        Show(InfoBarSeverity.Informational, "Loaded",
+            $"{preset.Name} is loaded into Profile {_profile + 1}. Click Save to mouse to keep it, or Discard changes to undo.");
+    }
+
     void Dpi_Changed(object sender, RoutedEventArgs e)
     {
         if (_populating || _memory is null) return;
         int i = (int)((FrameworkElement)sender).Tag;
-        double value = _dpiBoxes[i].Value;
+        double value = sender == _dpiSliders[i] ? _dpiSliders[i].Value : _dpiBoxes[i].Value;
         if (double.IsNaN(value)) return;
         int dpi = (int)Math.Round(value / DpiStage.Step) * DpiStage.Step;
         dpi = Math.Clamp(dpi, DpiStage.Min, DpiStage.Max);
         _memory.SetDpiStage(_profile, i, new DpiStage(_dpiToggles[i].IsOn, dpi, dpi));
+        // Keep the slider and the number box showing the same value.
+        _populating = true;
+        try { _dpiBoxes[i].Value = _dpiSliders[i].Value = dpi; }
+        finally { _populating = false; }
         UpdateDirty();
     }
 

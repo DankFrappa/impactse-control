@@ -50,7 +50,7 @@
         <button role="tab" data-tab="buttons" aria-selected="true">Buttons</button>
         <button role="tab" data-tab="dpi">DPI</button>
         <button role="tab" data-tab="lighting">Lighting</button>
-        <button role="tab" data-tab="performance">Polling &amp; profiles</button>
+        <button role="tab" data-tab="performance">Profiles &amp; polling</button>
         <button role="tab" data-tab="backups">Backups</button>
       </nav>
 
@@ -71,7 +71,8 @@
 
       <section class="card" data-panel="dpi" hidden>
         <h2>DPI stages</h2>
-        <p class="muted">The DPI buttons step through the stages that are switched on. 100 to 10,000, in steps of 100.</p>
+        <p class="muted">The DPI buttons step through the stages that are switched on. Drag a slider or type a number:
+          200 to 10,000, in steps of 100.</p>
         <div id="dpi-rows" class="dpi-rows"></div>
       </section>
 
@@ -85,6 +86,16 @@
       </section>
 
       <section class="card" data-panel="performance" hidden>
+        <h2>Ready-made profiles</h2>
+        <p class="muted">Fill the profile you're editing with Redragon's factory settings or a ready-made setup.
+          It sets the buttons, DPI and polling rate (and the light color for factory profiles). Your other profiles
+          aren't touched, and nothing changes on the mouse until you click <strong>Save to mouse</strong>.</p>
+        <div class="row">
+          <select id="profile-preset" aria-label="Ready-made profile"></select>
+          <button id="apply-profile-preset" disabled>Load into this profile</button>
+        </div>
+        <p id="profile-preset-text" class="muted"></p>
+        <p><button id="factory-reset">Reset this profile to factory settings</button></p>
         <h2>Polling rate</h2>
         <p class="muted">How often the mouse reports to the computer. 1000 Hz is smoothest.</p>
         <div id="poll" class="segmented" role="radiogroup" aria-label="Polling rate"></div>

@@ -223,9 +223,10 @@ export const MAIN_BUTTONS = [
 ];
 
 const ACTIVE_PROFILE_ADDRESS = 0x2c;
-const POLL_RATE_ADDRESS = 0x32; // 2 bytes per profile
-const LIGHTING_ADDRESS = 0x448; // 8 bytes per profile: ?? R G B mode ...
+export const POLL_RATE_ADDRESS = 0x32; // 2 bytes per profile
+export const LIGHTING_ADDRESS = 0x448; // 8 bytes per profile: ?? R G B mode ...
 const PROFILE_BASE = [0x40, 0x100, 0x1b0, 0x260, 0x310];
+const DPI_HEADER_OFFSET = 0; // count 00 currentStage 00
 const DPI_STAGES_OFFSET = 4; // then 6 bytes per stage: en xLo xHi yLo yHi 00
 const DPI_STAGE_LENGTH = 6;
 const BUTTONS_OFFSET = 0x42; // 4 bytes per button: type mod key 00
@@ -238,17 +239,19 @@ export const POLL_RATES = [
   [8, 125],
 ];
 
-export const DPI_MIN = 100;
+export const DPI_MIN = 200;
 export const DPI_MAX = 10000;
 export const DPI_STEP = 100;
 
-// Stored value = DPI / 100 + 2 (confirmed: 0x0A = 800, 0x0B = 900).
-export const dpiFromRaw = (raw) => (raw - 2) * DPI_STEP;
+// The mouse counts in steps of 80 DPI; Redragon's app shows the nearest 100.
+// Redragon's factory profiles store 400/800/1600/2400/3200 as 5/10/20/30/40, and its app
+// writes 800 as 0x0A and 900 as 0x0B.
+export const dpiFromRaw = (raw) => Math.floor((4 * raw + 2) / 5) * DPI_STEP;
 
 export function dpiToRaw(dpi) {
   if (!Number.isInteger(dpi) || dpi < DPI_MIN || dpi > DPI_MAX || dpi % DPI_STEP !== 0)
     throw new RangeError(`DPI must be ${DPI_MIN}–${DPI_MAX} in steps of ${DPI_STEP}.`);
-  return dpi / DPI_STEP + 2;
+  return Math.floor((5 * (dpi / DPI_STEP) + 2) / 4);
 }
 
 /**
@@ -314,6 +317,18 @@ export class MouseMemory {
     d[a + 2] = rx >> 8;
     d[a + 3] = ry & 0xff;
     d[a + 4] = ry >> 8;
+  }
+
+  /** The DPI stage (0–4) the profile starts on. */
+  getDpiStartStage(profile) {
+    return this.#data[MouseMemory.profileAddress(profile) + DPI_HEADER_OFFSET + 2];
+  }
+
+  setDpiStartStage(profile, stage) {
+    if (!(stage >= 0 && stage < DPI_STAGE_COUNT)) throw new RangeError("stage");
+    const a = MouseMemory.profileAddress(profile) + DPI_HEADER_OFFSET;
+    this.#data[a] = DPI_STAGE_COUNT;
+    this.#data[a + 2] = stage;
   }
 
   getButton(profile, button) {
@@ -501,3 +516,71 @@ export const SIDE_PRESETS = [
   ["Numpad 1–0, +, -", [0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 0x60, 0x61, 0x62, 0x57, 0x56]],
   ["F13–F24 (no clashes)", [0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 0x73]],
 ];
+
+// ---- Ready-made profiles ----
+// Redragon's five factory profiles come from the default profiles that ship with its app
+// (REDRAGON M908WB\Profile\Profile 1–5.prof): they differ only in light color and starting DPI stage.
+
+/** Top buttons 1–6 as the mouse ships: left, right, middle, back, DPI up, DPI down. */
+const FACTORY_TOP = [0x81, 0x82, 0x83, 0x84, 0x8a, 0x89].map(functionAction);
+/** Number row 1–0, then Num + and Num −, as the mouse ships. */
+const FACTORY_SIDE = [0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x57, 0x56].map(keyAction);
+const FACTORY_DPI = [400, 800, 1600, 2400, 3200];
+
+const factory = (n, color, rgb) => ({
+  name: `Factory profile ${n} (${color})`,
+  description: `Redragon's factory settings: ${color} light, starts at ${FACTORY_DPI[n - 1]} DPI.`,
+  side: FACTORY_SIDE,
+  dpi: FACTORY_DPI,
+  startStage: n - 1,
+  color: rgb,
+});
+
+export const PROFILE_PRESETS = [
+  factory(1, "red", [0xff, 0x00, 0x00]),
+  factory(2, "blue", [0x00, 0x00, 0xff]),
+  factory(3, "green", [0x00, 0xff, 0x00]),
+  factory(4, "pink", [0xff, 0x00, 0xff]),
+  factory(5, "yellow", [0xff, 0xff, 0x00]),
+  {
+    name: "MMO (side buttons F13–F24)",
+    description: "Side buttons send F13–F24, keys no keyboard has, so they never clash with your keybinds.",
+    side: SIDE_PRESETS[2][1].map(keyAction),
+    dpi: [800, 1200, 1600, 2400, 3200],
+    startStage: 2,
+  },
+  {
+    name: "Shooter (low DPI)",
+    description: "Lower DPI steps for precise aim. Side buttons keep the number row for weapon slots.",
+    side: FACTORY_SIDE,
+    dpi: [400, 800, 1200, 1600, 3200],
+    startStage: 1,
+  },
+  {
+    name: "Everyday and media",
+    description: "Side buttons for browsing, copy and paste, and music.",
+    side: [
+      functionAction(0x84), functionAction(0x85), comboAction(4, 0x2b),
+      comboAction(1, 0x06), comboAction(1, 0x19), comboAction(1, 0x1b),
+      comboAction(1, 0x1d), comboAction(8, 0x07), comboAction(8, 0x0f),
+      mediaAction(0xcd), mediaAction(0xea), mediaAction(0xe9),
+    ],
+    dpi: [800, 1200, 1600, 2400, 3200],
+    startStage: 2,
+  },
+];
+
+/**
+ * Fills one profile with the preset: buttons, DPI stages and polling rate, plus the light color
+ * for factory presets. Other profiles are left alone. Nothing reaches the mouse until it is saved.
+ */
+export function applyPreset(memory, profile, preset) {
+  FACTORY_TOP.forEach((action, b) => memory.setButton(profile, b, action));
+  preset.side.forEach((action, i) => memory.setButton(profile, FIRST_SIDE_BUTTON + i, action));
+  memory.setButton(profile, WHEEL_UP_BUTTON, functionAction(0x8b));
+  memory.setButton(profile, WHEEL_DOWN_BUTTON, functionAction(0x8c));
+  preset.dpi.forEach((dpi, s) => memory.setDpiStage(profile, s, { enabled: true, x: dpi }));
+  memory.setDpiStartStage(profile, preset.startStage);
+  memory.setPollRate(profile, 1);
+  if (preset.color) memory.setColor(profile, preset.color);
+}

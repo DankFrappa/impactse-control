@@ -1,7 +1,7 @@
 import {
   WebHidTransport, ImpactMouse, MouseMemory, MouseError, PROFILE_COUNT, DPI_STAGE_COUNT, SIDE_BUTTON_COUNT,
   FIRST_SIDE_BUTTON, MAIN_BUTTONS, POLL_RATES, DPI_MIN, DPI_MAX, DPI_STEP, CHOICE_GROUPS, ALL_CHOICES,
-  SIDE_PRESETS, choiceIndex, describe, keyAction,
+  SIDE_PRESETS, PROFILE_PRESETS, applyPreset, choiceIndex, describe, keyAction,
 } from "./mouse.js";
 import { DEMO_MEMORY_HEX } from "./demo.js";
 
@@ -104,6 +104,20 @@ function build() {
     changed();
   });
 
+  $("profile-preset").append(new Option("Choose a ready-made profile…", ""));
+  PROFILE_PRESETS.forEach(({ name }, i) => $("profile-preset").append(new Option(name, String(i))));
+  $("profile-preset").addEventListener("change", () => {
+    const preset = PROFILE_PRESETS[Number($("profile-preset").value)];
+    $("apply-profile-preset").disabled = $("profile-preset").value === "";
+    $("profile-preset-text").textContent = $("profile-preset").value === "" ? "" : preset.description;
+  });
+  $("apply-profile-preset").addEventListener("click", () => {
+    if ($("profile-preset").value === "") return;
+    loadPreset(PROFILE_PRESETS[Number($("profile-preset").value)]);
+  });
+  // Profile 1 resets to factory profile 1, and so on, as the mouse ships.
+  $("factory-reset").addEventListener("click", () => loadPreset(PROFILE_PRESETS[profile]));
+
   for (let i = 0; i < DPI_STAGE_COUNT; i++) {
     const row = document.createElement("div");
     row.className = "dpi-row";
@@ -177,6 +191,12 @@ function build() {
   $("restore-original").addEventListener("click", restoreOriginal);
   $("download-backup").addEventListener("click", downloadBackup);
   $("restore-file").addEventListener("change", restoreFromFile);
+}
+
+function loadPreset(preset) {
+  applyPreset(memory, profile, preset);
+  populate();
+  show("info", `${preset.name} is loaded into Profile ${profile + 1}. Click Save to mouse to keep it, or Discard changes to undo.`);
 }
 
 // ---- Showing the current profile ----

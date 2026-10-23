@@ -28,6 +28,7 @@ public sealed class MouseMemory
     public const int PollRateAddress = 0x32;      // 2 bytes per profile
     public const int LightingAddress = 0x448;     // 8 bytes per profile: ?? R G B mode ...
     static readonly int[] ProfileBase = { 0x40, 0x100, 0x1B0, 0x260, 0x310 };
+    const int DpiHeaderOffset = 0;               // count 00 currentStage 00
     const int DpiStagesOffset = 4;               // then 6 bytes per stage: en xLo xHi yLo yHi 00
     const int DpiStageLength = 6;
     const int ButtonsOffset = 0x42;              // 4 bytes per button: type mod key 00
@@ -80,6 +81,17 @@ public sealed class MouseMemory
         _data[a + 2] = (byte)(x >> 8);
         _data[a + 3] = (byte)y;
         _data[a + 4] = (byte)(y >> 8);
+    }
+
+    /// <summary>The DPI stage (0–4) the profile starts on.</summary>
+    public int GetDpiStartStage(int profile) => _data[ProfileAddress(profile) + DpiHeaderOffset + 2];
+
+    public void SetDpiStartStage(int profile, int stage)
+    {
+        if (stage < 0 || stage >= DpiStageCount) throw new ArgumentOutOfRangeException(nameof(stage));
+        int a = ProfileAddress(profile) + DpiHeaderOffset;
+        _data[a] = DpiStageCount;
+        _data[a + 2] = (byte)stage;
     }
 
     public ButtonAction GetButton(int profile, int button)
@@ -173,18 +185,20 @@ public enum PollRate : byte
 
 public readonly record struct DpiStage(bool Enabled, int X, int Y)
 {
-    public const int Min = 100;
+    public const int Min = 200;
     public const int Max = 10000;
     public const int Step = 100;
 
-    // Stored value = DPI / 100 + 2 (confirmed: 0x0A = 800, 0x0B = 900).
-    public static int FromRaw(int raw) => (raw - 2) * Step;
+    // The mouse counts in steps of 80 DPI; Redragon's app shows the nearest 100.
+    // Redragon's factory profiles store 400/800/1600/2400/3200 as 5/10/20/30/40, and its app
+    // writes 800 as 0x0A and 900 as 0x0B.
+    public static int FromRaw(int raw) => (4 * raw + 2) / 5 * Step;
 
     public static int ToRaw(int dpi)
     {
         if (dpi < Min || dpi > Max || dpi % Step != 0)
             throw new ArgumentOutOfRangeException(nameof(dpi), $"DPI must be {Min}–{Max} in steps of {Step}.");
-        return dpi / Step + 2;
+        return (5 * (dpi / Step) + 2) / 4;
     }
 }
 

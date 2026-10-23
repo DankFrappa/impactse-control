@@ -34,8 +34,8 @@ Reads and writes use at most 0x20 data bytes each, as the official app does.
 | `0x32 + 2p` | Polling rate: 1 = 1000 Hz, 2 = 500 Hz (4 = 250, 8 = 125 assumed) | confirmed for 1000/500 |
 | `0x3C` | Key-map mode (`1F` on this firmware) | read only |
 | `0x40`, `0x100`, `0x1B0`, `0x260`, `0x310` | Profile 1–5 base | confirmed |
-| base + 0 | DPI header: `count 00 currentStage 00` | read only |
-| base + 4 + 6s | DPI stage s: `enabled xLo xHi yLo yHi 00`, value = DPI / 100 + 2 | confirmed |
+| base + 0 | DPI header: `count 00 startStage 00` (count is 5) | confirmed |
+| base + 4 + 6s | DPI stage s: `enabled xLo xHi yLo yHi 00`, value = DPI × 1.25 / 100 (steps of 80 DPI, shown rounded to 100). See "Factory profiles" | confirmed |
 | base + 0x42 + 4b | Button b: `type modifier code extra` (24 buttons). See "Button actions" below | confirmed |
 | buttons 0–5 | Top buttons 1–6 as numbered in Redragon's picture (factory: left, right, middle, back, DPI up, DPI down) | confirmed |
 | buttons 6–17 | The 12 side buttons, in order | confirmed |
@@ -63,3 +63,22 @@ From the lookup table in RDCfg.exe at 0x4a8980 (app function id → 4 bytes sent
 | `9B 04 00 00` | LED switch |
 | `00 00 00 00` | Disabled |
 | `91`, `99`, `9A`, `93`, `9D` | Macro, fire key, sniper, launch app, other: not supported yet |
+
+## Factory profiles
+
+Redragon's app ships five default profiles (`REDRAGON M908WB\Profile\Profile 1–5.prof`, Qt INI files). They are
+identical except for the light color and the DPI stage each one starts on:
+
+| Profile | Light | Starts at |
+|---|---|---|
+| 1 | red `FF 00 00` | stage 1 (400 DPI) |
+| 2 | blue `00 00 FF` | stage 2 (800 DPI) |
+| 3 | green `00 FF 00` | stage 3 (1600 DPI) |
+| 4 | pink `FF 00 FF` | stage 4 (2400 DPI) |
+| 5 | yellow `FF FF 00` | stage 5 (3200 DPI) |
+
+All of them: 1000 Hz; DPI stages 400, 800, 1600, 2400, 3200 (all on); top buttons left, right, middle, back,
+DPI up, DPI down; side buttons 1–0, Num +, Num −; wheel scroll up and down.
+
+The `.prof` files store DPI in hundreds (4, 8, 16, 24, 32) and the mouse stores 5, 10, 20, 30, 40 for the same
+stages, so the mouse's unit is 80 DPI. This also matches what Redragon's app wrote for 800 (`0A`) and 900 (`0B`).
