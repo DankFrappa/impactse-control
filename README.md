@@ -113,6 +113,8 @@ Backup files work in both versions.
 - Lighting effects (breathing, rainbow, and others) and brightness
 - Macros
 - Custom key combos beyond the built-in shortcuts
+- Save one profile to a file and load it back later. This makes it easy to try out a new button layout and
+  then go back to exactly what you had. (Today, backups save and restore all five profiles at once.)
 
 ## For developers
 
