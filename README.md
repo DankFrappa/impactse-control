@@ -51,6 +51,8 @@ Use this if you'd rather have a regular program on your PC. It needs Windows 10 
 
 ## What's new
 
+The latest changes. See the [full changelog](CHANGELOG.md) for everything.
+
 **October 23, 2026**
 
 - **Ready-made profiles.** Load Redragon's factory settings into any profile with one click, or start from a
@@ -68,9 +70,6 @@ Use this if you'd rather have a regular program on your PC. It needs Windows 10 
 - **DPI numbers now match Redragon's app.** The mouse counts DPI in steps of 80, which this project now reads
   the same way Redragon's software does. For example, the factory stages now show as 400, 800, 1600, 2400 and 3200.
 
-**October 22, 2026**
-
-- First release of the Windows app and the web page: every button, DPI, light color, polling rate, profiles and backups.
 
 ## Putting your original settings back
 
